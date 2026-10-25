@@ -21,41 +21,8 @@ const sendMessage = async (req, res) => {
     // ── 1. Run NLP classification ──────────────────────────────────────────
     const nlpResult = await classifyIntent(message.trim());
 
-    // ── 2. Persist to MongoDB ──────────────────────────────────────────────
-    let session = await ChatLog.findOne({ sessionId });
-
-    const userMsg = {
-      role:      'user',
-      text:      message.trim(),
-      timestamp: new Date(),
-    };
-
-    const botMsg = {
-      role:       'bot',
-      text:       nlpResult.response,
-      timestamp:  new Date(),
-      intent:     nlpResult.intent,
-      confidence: nlpResult.confidence,
-      entities:   nlpResult.entities,
-    };
-
-    if (!session) {
-      session = new ChatLog({
-        sessionId,
-        userId,
-        messages: [userMsg, botMsg],
-        totalMessages:  2,
-        resolvedCount:  nlpResult.isFallback ? 0 : 1,
-        fallbackCount:  nlpResult.isFallback ? 1 : 0,
-      });
-    } else {
-      session.messages.push(userMsg, botMsg);
-      session.totalMessages  += 2;
-      if (nlpResult.isFallback) session.fallbackCount  += 1;
-      else                      session.resolvedCount  += 1;
-    }
-
-    await session.save();
+    // ── 2. Persist to Supabase ─────────────────────────────────────────────
+    await ChatLog.logExchange({ sessionId, userId, userText: message.trim(), nlpResult });
 
     // ── 3. Return response ─────────────────────────────────────────────────
     return res.json({
@@ -81,7 +48,7 @@ const sendMessage = async (req, res) => {
 const getHistory = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = await ChatLog.findOne({ sessionId }).lean();
+    const session = await ChatLog.findBySessionId(sessionId);
 
     if (!session) {
       return res.json({ success: true, messages: [], stats: {} });
@@ -108,15 +75,7 @@ const getSessions = async (req, res) => {
     const page  = parseInt(req.query.page)  || 1;
     const limit = parseInt(req.query.limit) || 20;
 
-    const sessions = await ChatLog
-      .find()
-      .sort({ lastActivity: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .select('sessionId userId totalMessages resolvedCount fallbackCount lastActivity createdAt')
-      .lean();
-
-    const total = await ChatLog.countDocuments();
+    const { sessions, total } = await ChatLog.listSessions({ page, limit });
 
     return res.json({ success: true, sessions, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
@@ -128,19 +87,9 @@ const getSessions = async (req, res) => {
 // ─── GET /api/chat/stats ──────────────────────────────────────────────────────
 const getStats = async (req, res) => {
   try {
-    const [totals] = await ChatLog.aggregate([
-      {
-        $group: {
-          _id:           null,
-          totalSessions: { $sum: 1 },
-          totalMessages: { $sum: '$totalMessages' },
-          totalResolved: { $sum: '$resolvedCount' },
-          totalFallback: { $sum: '$fallbackCount' },
-        },
-      },
-    ]);
+    const totals = await ChatLog.getTotals();
 
-    if (!totals) {
+    if (!totals.totalSessions) {
       return res.json({ success: true, stats: { accuracy: 0, totalSessions: 0 } });
     }
 

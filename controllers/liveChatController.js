@@ -65,13 +65,7 @@ const getAllChats = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const status = req.query.status;
 
-    const query  = status ? { status } : {};
-    const total  = await LiveChat.countDocuments(query);
-    const chats  = await LiveChat.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+    const { chats, total } = await LiveChat.list({ status, page, limit });
 
     res.json({ success: true, chats, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {

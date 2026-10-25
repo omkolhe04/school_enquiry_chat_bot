@@ -1182,7 +1182,7 @@ const CACHE_TTL  = 5 * 60 * 1000;
 
 async function refreshCache() {
   try {
-    const dbIntents = await Intent.find({ isActive: true }).lean();
+    const dbIntents = await Intent.findActive();
     if (dbIntents && dbIntents.length > 0) {
       const dbNames = new Set(dbIntents.map(i => i.intentName));
       const filtered = BUILT_IN_INTENTS.filter(i => !dbNames.has(i.intentName));
@@ -1294,7 +1294,7 @@ async function classifyIntent(userMessage) {
 
   if (best.score >= THRESHOLD) {
     const resp = best.responses[Math.floor(Math.random() * best.responses.length)];
-    if (best._id) Intent.findByIdAndUpdate(best._id, { $inc: { hitCount: 1 } }).exec().catch(() => {});
+    if (best._id) Intent.incrementHit(best._id).catch(() => {});
     return {
       intent:      best.intent,
       displayName: best.displayName,

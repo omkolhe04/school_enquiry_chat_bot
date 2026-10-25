@@ -134,7 +134,7 @@ io.on('connection', (socket) => {
         timestamp:     new Date().toISOString(),
       });
 
-      // ── Step 7: Persist to MongoDB ─────────────────────────────────────────
+      // ── Step 7: Persist to Supabase ────────────────────────────────────────
       await persistChatLog(sessionId, userId, originalMessage, nlpResult, language);
 
     } catch (err) {
@@ -162,7 +162,7 @@ io.on('connection', (socket) => {
     triggerConfidence  = 0,
   }) => {
     try {
-      // Create a queued session in MongoDB
+      // Create a queued session in Supabase
       const chat = await liveChatService.createSession({
         studentSocketId: socket.id,
         studentId:       userId,
@@ -404,27 +404,7 @@ io.on('connection', (socket) => {
 // ─── DB helper ─────────────────────────────────────────────────────────────────
 async function persistChatLog(sessionId, userId, message, nlpResult, language) {
   try {
-    let session = await ChatLog.findOne({ sessionId });
-    const msgs  = [
-      { role: 'user', text: message,             timestamp: new Date() },
-      { role: 'bot',  text: nlpResult.response,  timestamp: new Date(),
-        intent: nlpResult.intent, confidence: nlpResult.confidence, entities: nlpResult.entities },
-    ];
-    if (!session) {
-      session = new ChatLog({
-        sessionId, userId,
-        messages:      msgs,
-        totalMessages: 2,
-        resolvedCount: nlpResult.isFallback ? 0 : 1,
-        fallbackCount: nlpResult.isFallback ? 1 : 0,
-      });
-    } else {
-      session.messages.push(...msgs);
-      session.totalMessages += 2;
-      if (nlpResult.isFallback) session.fallbackCount += 1;
-      else                      session.resolvedCount += 1;
-    }
-    await session.save();
+    await ChatLog.logExchange({ sessionId, userId, userText: message, nlpResult });
   } catch (err) {
     console.error('[DB] persistChatLog error:', err.message);
   }

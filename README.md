@@ -1,6 +1,6 @@
 # 🎓 AI Chatbot for College Enquiry System
 
-> A production-ready AI chatbot that answers student queries about college information using custom NLP intent classification, Node.js, Socket.io, and MongoDB.
+> A production-ready AI chatbot that answers student queries about college information using custom NLP intent classification, Node.js, Socket.io, and Supabase (Postgres).
 
 ---
 
@@ -10,7 +10,7 @@
 |---|---|
 | 🧠 NLP Engine | TF-IDF + Cosine Similarity (custom, no API needed) |
 | 💬 Real-time | Socket.io with typing indicators |
-| 📦 Database | MongoDB (chat logs + intents) |
+| 📦 Database | Supabase / Postgres (intents, chat logs, live chats) |
 | 🎨 UI | Animated dark cosmic theme |
 | 🛠️ Admin Panel | Full CRUD for intents |
 | 📊 Analytics | Accuracy, sessions, message stats |
@@ -49,7 +49,7 @@ college-chatbot/
 ├── .env.example            # Environment variables template
 │
 ├── config/
-│   └── database.js         # MongoDB connection
+│   └── database.js         # Supabase client
 │
 ├── controllers/
 │   ├── chatController.js   # Chat API logic
@@ -59,9 +59,13 @@ college-chatbot/
 │   ├── chat.js             # /api/chat routes
 │   └── admin.js            # /api/admin routes
 │
-├── models/
-│   ├── Intent.js           # Intent schema
-│   └── ChatLog.js          # Chat session schema
+├── models/                 # Supabase data-access modules
+│   ├── Intent.js           # intents table
+│   ├── ChatLog.js          # chat_logs + chat_messages tables
+│   └── LiveChat.js         # live_chats + live_chat_messages tables
+│
+├── supabase/
+│   └── schema.sql          # Tables, functions, RLS — run once in Supabase
 │
 ├── services/
 │   └── nlpService.js       # NLP engine (TF-IDF + stemmer)
@@ -84,7 +88,7 @@ college-chatbot/
 
 ### Prerequisites
 - Node.js ≥ 18.x
-- MongoDB ≥ 6.x (local or Atlas)
+- A free [Supabase](https://supabase.com) project
 - npm ≥ 9.x
 
 ---
@@ -109,7 +113,8 @@ cp .env.example .env
 **Key `.env` variables:**
 ```env
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/college_chatbot
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 CONFIDENCE_THRESHOLD=0.35
@@ -120,13 +125,15 @@ COLLEGE_WEBSITE=https://www.git.edu
 COLLEGE_ADDRESS=123 University Avenue, Tech City, TC 45678
 ```
 
-### Step 4: Start MongoDB
-```bash
-# Local MongoDB
-mongod --dbpath /data/db
+### Step 4: Create the Supabase tables
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor → New query**, paste the contents of `supabase/schema.sql`, and click **Run**.
+3. From **Project Settings → API**, copy the **Project URL** into `SUPABASE_URL` and the
+   **service_role** key into `SUPABASE_SERVICE_ROLE_KEY`.
 
-# OR use MongoDB Atlas (update MONGODB_URI in .env)
-```
+> The service_role key bypasses Row Level Security, so keep it server-side only (it lives in `.env`,
+> which is git-ignored). RLS is enabled on every table with no policies, so the public anon key
+> can't read or write anything.
 
 ### Step 5: Seed the database
 ```bash
@@ -336,7 +343,7 @@ Use template variables in responses:
 ## 🛡️ Production Checklist
 
 - [ ] Set strong `ADMIN_PASSWORD` in .env
-- [ ] Use MongoDB Atlas with auth for production
+- [ ] Keep `SUPABASE_SERVICE_ROLE_KEY` secret (never ship it to the browser)
 - [ ] Enable HTTPS (use nginx / Caddy as reverse proxy)
 - [ ] Set `NODE_ENV=production`
 - [ ] Use PM2 for process management: `pm2 start server.js`

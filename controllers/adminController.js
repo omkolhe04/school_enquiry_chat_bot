@@ -38,8 +38,7 @@ const login = (req, res) => {
 const getAllIntents = async (req, res) => {
   try {
     const category = req.query.category;
-    const query    = category ? { category } : {};
-    const intents  = await Intent.find(query).sort({ category: 1, intentName: 1 }).lean();
+    const intents  = await Intent.list({ category });
     return res.json({ success: true, intents, total: intents.length });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -49,7 +48,7 @@ const getAllIntents = async (req, res) => {
 // ─── GET /api/admin/intents/:id ───────────────────────────────────────────────
 const getIntentById = async (req, res) => {
   try {
-    const intent = await Intent.findById(req.params.id).lean();
+    const intent = await Intent.findById(req.params.id);
     if (!intent) return res.status(404).json({ success: false, error: 'Intent not found.' });
     return res.json({ success: true, intent });
   } catch (err) {
@@ -60,8 +59,7 @@ const getIntentById = async (req, res) => {
 // ─── POST /api/admin/intents ──────────────────────────────────────────────────
 const createIntent = async (req, res) => {
   try {
-    const intent = new Intent(req.body);
-    await intent.save();
+    const intent = await Intent.create(req.body);
     await invalidateCache();
     return res.status(201).json({ success: true, intent, message: 'Intent created successfully.' });
   } catch (err) {
@@ -75,14 +73,14 @@ const createIntent = async (req, res) => {
 // ─── PUT /api/admin/intents/:id ───────────────────────────────────────────────
 const updateIntent = async (req, res) => {
   try {
-    const intent = await Intent.findByIdAndUpdate(req.params.id, req.body, {
-      new:          true,
-      runValidators: true,
-    });
+    const intent = await Intent.update(req.params.id, req.body);
     if (!intent) return res.status(404).json({ success: false, error: 'Intent not found.' });
     await invalidateCache();
     return res.json({ success: true, intent, message: 'Intent updated successfully.' });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, error: 'Intent name already exists.' });
+    }
     return res.status(400).json({ success: false, error: err.message });
   }
 };
@@ -90,7 +88,7 @@ const updateIntent = async (req, res) => {
 // ─── DELETE /api/admin/intents/:id ───────────────────────────────────────────
 const deleteIntent = async (req, res) => {
   try {
-    const intent = await Intent.findByIdAndDelete(req.params.id);
+    const intent = await Intent.remove(req.params.id);
     if (!intent) return res.status(404).json({ success: false, error: 'Intent not found.' });
     await invalidateCache();
     return res.json({ success: true, message: `Intent "${intent.intentName}" deleted.` });
@@ -102,10 +100,8 @@ const deleteIntent = async (req, res) => {
 // ─── POST /api/admin/intents/:id/toggle ──────────────────────────────────────
 const toggleIntent = async (req, res) => {
   try {
-    const intent = await Intent.findById(req.params.id);
+    const intent = await Intent.toggle(req.params.id);
     if (!intent) return res.status(404).json({ success: false, error: 'Intent not found.' });
-    intent.isActive = !intent.isActive;
-    await intent.save();
     await invalidateCache();
     return res.json({
       success: true,

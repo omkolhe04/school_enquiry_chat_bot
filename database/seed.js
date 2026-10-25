@@ -1,11 +1,10 @@
 /**
  * database/seed.js
- * Seed the MongoDB database with 30+ college intents
+ * Seed the Supabase database with 30+ college intents
  * Run: node database/seed.js
  */
 
 require('dotenv').config();
-const mongoose = require('mongoose');
 const Intent   = require('../models/Intent');
 
 const INTENTS = [
@@ -649,11 +648,10 @@ const INTENTS = [
 
 async function seed() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/college_chatbot');
-    console.log('✅  Connected to MongoDB');
+    console.log('✅  Using Supabase project:', process.env.SUPABASE_URL);
 
     // Clear existing intents
-    await Intent.deleteMany({});
+    await Intent.deleteAll();
     console.log('🗑️   Cleared existing intents');
 
     // Insert all intents
@@ -672,9 +670,8 @@ async function seed() {
 
     console.log('\n✨  Database seeded! Run "npm start" to launch the chatbot.');
   } catch (err) {
-    console.error('❌  Seed failed:', err);
-  } finally {
-    await mongoose.disconnect();
+    console.error('❌  Seed failed:', err.message || err);
+    process.exitCode = 1;
   }
 }
 

@@ -1,114 +1,159 @@
 /**
  * models/LiveChat.js
- * ─────────────────────────────────────────────────────────────────────────────
- * Schema for live chat sessions between students and admins.
- * Triggered when chatbot confidence is below threshold.
- * ─────────────────────────────────────────────────────────────────────────────
+ * Data access for live chat sessions between students and admins
+ * (Supabase tables: live_chats, live_chat_messages)
  */
 
-const mongoose = require('mongoose');
+const { getSupabase } = require('../config/database');
 
-// ── Individual message within a live chat ─────────────────────────────────────
-const LiveMessageSchema = new mongoose.Schema(
-  {
-    sender:      { type: String, enum: ['student', 'admin', 'bot', 'system'], required: true },
-    senderName:  { type: String, default: 'Unknown' },
-    text:        { type: String, required: true },
-    timestamp:   { type: Date, default: Date.now },
-    isRead:      { type: Boolean, default: false },
-    lang:        { type: String, default: 'en' }, // language of the message
-  },
-  { _id: false }
-);
+const TABLE        = 'live_chats';
+const WITH_MSGS    = '*, live_chat_messages(*)';
 
-// ── Live Chat Session ─────────────────────────────────────────────────────────
-const LiveChatSchema = new mongoose.Schema(
-  {
-    // Student info
-    studentSocketId: { type: String, required: true },
-    studentId:       { type: String, default: 'anonymous' },
-    studentName:     { type: String, default: 'Student' },
-    sessionId:       { type: String, required: true, index: true },
+function messageToApi(m) {
+  return {
+    sender:     m.sender,
+    senderName: m.sender_name,
+    text:       m.text,
+    timestamp:  m.timestamp,
+    isRead:     m.is_read,
+    lang:       m.lang,
+  };
+}
 
-    // Admin info (populated when admin accepts)
-    adminSocketId:   { type: String, default: null },
-    adminId:         { type: String, default: null },
-    adminName:       { type: String, default: null },
+function toApi(row) {
+  if (!row) return null;
+  const out = {
+    _id:               row.id,
+    roomId:            row.room_id,
+    sessionId:         row.session_id,
+    studentSocketId:   row.student_socket_id,
+    studentId:         row.student_id,
+    studentName:       row.student_name,
+    adminSocketId:     row.admin_socket_id,
+    adminId:           row.admin_id,
+    adminName:         row.admin_name,
+    status:            row.status,
+    language:          row.language,
+    subject:           row.subject,
+    triggerMessage:    row.trigger_message,
+    triggerConfidence: row.trigger_confidence,
+    queuedAt:          row.queued_at,
+    acceptedAt:        row.accepted_at,
+    closedAt:          row.closed_at,
+    rating:            row.rating,
+    feedback:          row.feedback,
+    unreadByAdmin:     row.unread_by_admin,
+    unreadByStudent:   row.unread_by_student,
+    createdAt:         row.created_at,
+    updatedAt:         row.updated_at,
+  };
+  if (row.live_chat_messages) out.messages = row.live_chat_messages.map(messageToApi);
+  return out;
+}
 
-    // Chat status
-    status: {
-      type:    String,
-      enum:    ['queued', 'active', 'closed', 'abandoned'],
-      default: 'queued',
-      index:   true,
-    },
-
-    // Room identifier for Socket.io
-    roomId: { type: String, required: true, unique: true },
-
-    // All messages
-    messages: [LiveMessageSchema],
-
-    // Meta
-    language:        { type: String, default: 'en' },
-    subject:         { type: String, default: 'General Query' },
-    triggerMessage:  { type: String, default: '' }, // the message that triggered live chat
-    triggerConfidence: { type: Number, default: 0 },
-
-    // Timestamps
-    queuedAt:    { type: Date, default: Date.now },
-    acceptedAt:  { type: Date, default: null },
-    closedAt:    { type: Date, default: null },
-
-    // Ratings (optional student feedback)
-    rating:    { type: Number, min: 1, max: 5, default: null },
-    feedback:  { type: String, default: null },
-
-    // Unread counts
-    unreadByAdmin:   { type: Number, default: 0 },
-    unreadByStudent: { type: Number, default: 0 },
-  },
-  { timestamps: true }
-);
-
-// ── Virtuals ──────────────────────────────────────────────────────────────────
-LiveChatSchema.virtual('duration').get(function () {
-  if (!this.acceptedAt) return null;
-  const end = this.closedAt || new Date();
-  return Math.round((end - this.acceptedAt) / 60000); // minutes
-});
-
-LiveChatSchema.virtual('waitTime').get(function () {
-  if (!this.queuedAt) return null;
-  const end = this.acceptedAt || new Date();
-  return Math.round((end - this.queuedAt) / 1000); // seconds
-});
-
-// ── Pre-save hook ─────────────────────────────────────────────────────────────
-LiveChatSchema.pre('save', function (next) {
-  if (this.isNew) {
-    this.roomId = this.roomId || `live_${this.sessionId}_${Date.now()}`;
+const FIELD_MAP = {
+  status: 'status', adminSocketId: 'admin_socket_id', adminId: 'admin_id', adminName: 'admin_name',
+  acceptedAt: 'accepted_at', closedAt: 'closed_at', rating: 'rating', feedback: 'feedback',
+  unreadByAdmin: 'unread_by_admin', unreadByStudent: 'unread_by_student',
+};
+function fieldsToRow(fields) {
+  const row = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (FIELD_MAP[k]) row[FIELD_MAP[k]] = v instanceof Date ? v.toISOString() : v;
   }
-  next();
-});
+  return row;
+}
 
-// ── Static methods ────────────────────────────────────────────────────────────
-LiveChatSchema.statics.getQueue = function () {
-  return this.find({ status: 'queued' }).sort({ queuedAt: 1 }).lean();
-};
+const orderMsgs = (q) => q.order('id', { referencedTable: 'live_chat_messages', ascending: true });
+const check = ({ data, error, count }) => { if (error) throw new Error(error.message); return { data, count }; };
 
-LiveChatSchema.statics.getActiveChats = function () {
-  return this.find({ status: 'active' }).sort({ acceptedAt: -1 }).lean();
-};
+// ── Writes ────────────────────────────────────────────────────────────────────
+async function create(fields, firstMessage) {
+  const sb = getSupabase();
+  const { data: chat } = check(await sb.from(TABLE).insert({
+    room_id:            fields.roomId,
+    session_id:         fields.sessionId,
+    student_socket_id:  fields.studentSocketId,
+    student_id:         fields.studentId || 'anonymous',
+    student_name:       fields.studentName || 'Student',
+    language:           fields.language || 'en',
+    trigger_message:    fields.triggerMessage || '',
+    trigger_confidence: fields.triggerConfidence || 0,
+    status:             'queued',
+  }).select().single());
 
-LiveChatSchema.statics.getStats = async function () {
+  if (firstMessage) await addMessage(chat.room_id, firstMessage);
+  return findByRoomId(chat.room_id);
+}
+
+async function addMessage(roomId, { sender, senderName, text, lang = 'en' }) {
+  check(await getSupabase().rpc('add_live_chat_message', {
+    p_room_id: roomId, p_sender: sender, p_sender_name: senderName, p_text: text, p_lang: lang,
+  }));
+}
+
+/**
+ * Update a session. `onlyIfStatus` makes it conditional (e.g. accept only
+ * while still queued, so two admins can't grab the same chat). Returns null
+ * when no row matched.
+ */
+async function updateByRoomId(roomId, fields, { onlyIfStatus } = {}) {
+  let q = getSupabase().from(TABLE).update(fieldsToRow(fields)).eq('room_id', roomId);
+  if (onlyIfStatus) q = q.eq('status', onlyIfStatus);
+  const { data } = check(await q.select().maybeSingle());
+  return toApi(data);
+}
+
+// ── Reads ─────────────────────────────────────────────────────────────────────
+async function findByRoomId(roomId) {
+  const { data } = check(await orderMsgs(
+    getSupabase().from(TABLE).select(WITH_MSGS).eq('room_id', roomId)
+  ).maybeSingle());
+  return toApi(data);
+}
+
+async function getQueue() {
+  const { data } = check(await getSupabase().from(TABLE)
+    .select('id, room_id, student_name, trigger_message, trigger_confidence, queued_at, language')
+    .eq('status', 'queued')
+    .order('queued_at', { ascending: true }));
+  return data.map(r => ({
+    _id: r.id, roomId: r.room_id, studentName: r.student_name, triggerMessage: r.trigger_message,
+    triggerConfidence: r.trigger_confidence, queuedAt: r.queued_at, language: r.language,
+  }));
+}
+
+async function getActiveChats() {
+  const { data } = check(await orderMsgs(getSupabase().from(TABLE).select(WITH_MSGS)
+    .eq('status', 'active')
+    .order('accepted_at', { ascending: false })));
+  return data.map(toApi);
+}
+
+async function list({ status, page = 1, limit = 20 } = {}) {
+  const from = (page - 1) * limit;
+  let q = getSupabase().from(TABLE).select(WITH_MSGS, { count: 'exact' });
+  if (status) q = q.eq('status', status);
+  const { data, count } = check(await orderMsgs(q.order('created_at', { ascending: false }))
+    .range(from, from + limit - 1));
+  return { chats: data.map(toApi), total: count || 0 };
+}
+
+async function countByStatus(status) {
+  let q = getSupabase().from(TABLE).select('id', { count: 'exact', head: true });
+  if (status) q = q.eq('status', status);
+  const { count } = check(await q);
+  return count || 0;
+}
+
+async function getStats() {
   const [total, queued, active, closed] = await Promise.all([
-    this.countDocuments(),
-    this.countDocuments({ status: 'queued' }),
-    this.countDocuments({ status: 'active' }),
-    this.countDocuments({ status: 'closed' }),
+    countByStatus(), countByStatus('queued'), countByStatus('active'), countByStatus('closed'),
   ]);
   return { total, queued, active, closed };
-};
+}
 
-module.exports = mongoose.model('LiveChat', LiveChatSchema);
+module.exports = {
+  create, addMessage, updateByRoomId,
+  findByRoomId, getQueue, getActiveChats, list, getStats,
+};

@@ -65,27 +65,11 @@ async function createSession({
 }) {
   const roomId = `live_${sessionId}_${Date.now()}`;
 
-  const chat = new LiveChat({
-    studentSocketId,
-    studentId,
-    studentName,
-    sessionId,
-    roomId,
-    language,
-    triggerMessage,
-    triggerConfidence,
-    status: 'queued',
-    messages: [
-      {
-        sender:     'system',
-        senderName: 'System',
-        text:       `Chat session started. Student query: "${triggerMessage}"`,
-        timestamp:  new Date(),
-      },
-    ],
-  });
+  const chat = await LiveChat.create(
+    { studentSocketId, studentId, studentName, sessionId, roomId, language, triggerMessage, triggerConfidence },
+    { sender: 'system', senderName: 'System', text: `Chat session started. Student query: "${triggerMessage}"` },
+  );
 
-  await chat.save();
   activeSessions.set(roomId, chat);
   console.log(`[LiveChat] Session created: ${roomId} for student ${studentName}`);
   return chat;
@@ -93,23 +77,23 @@ async function createSession({
 
 // ── Admin accepts a queued chat ───────────────────────────────────────────────
 async function acceptSession(roomId, adminSocketId, adminId, adminName) {
-  const chat = await LiveChat.findOne({ roomId });
-  if (!chat) throw new Error(`Session not found: ${roomId}`);
-  if (chat.status !== 'queued') throw new Error(`Session ${roomId} is not in queue (status: ${chat.status})`);
+  // Conditional update: only succeeds while the chat is still queued
+  const updated = await LiveChat.updateByRoomId(
+    roomId,
+    { status: 'active', adminSocketId, adminId, adminName, acceptedAt: new Date() },
+    { onlyIfStatus: 'queued' },
+  );
+  if (!updated) {
+    const existing = await LiveChat.findByRoomId(roomId);
+    if (!existing) throw new Error(`Session not found: ${roomId}`);
+    throw new Error(`Session ${roomId} is not in queue (status: ${existing.status})`);
+  }
 
-  chat.status         = 'active';
-  chat.adminSocketId  = adminSocketId;
-  chat.adminId        = adminId;
-  chat.adminName      = adminName;
-  chat.acceptedAt     = new Date();
-  chat.messages.push({
-    sender:     'system',
-    senderName: 'System',
-    text:       `Admin ${adminName} has joined the chat.`,
-    timestamp:  new Date(),
+  await LiveChat.addMessage(roomId, {
+    sender: 'system', senderName: 'System', text: `Admin ${adminName} has joined the chat.`,
   });
 
-  await chat.save();
+  const chat = await LiveChat.findByRoomId(roomId);
   activeSessions.set(roomId, chat);
   setAdminBusy(adminSocketId, true, roomId);
   console.log(`[LiveChat] Admin ${adminName} accepted chat ${roomId}`);
@@ -118,77 +102,49 @@ async function acceptSession(roomId, adminSocketId, adminId, adminName) {
 
 // ── Add a message to a session ─────────────────────────────────────────────────
 async function addMessage(roomId, { sender, senderName, text, lang = 'en' }) {
-  const chat = await LiveChat.findOne({ roomId });
-  if (!chat) throw new Error(`Session not found: ${roomId}`);
-
-  chat.messages.push({ sender, senderName, text, timestamp: new Date(), lang });
-
-  if (sender === 'student') chat.unreadByAdmin   += 1;
-  if (sender === 'admin')   chat.unreadByStudent += 1;
-
-  await chat.save();
-  return chat;
+  await LiveChat.addMessage(roomId, { sender, senderName, text, lang });
 }
 
 // ── Mark messages as read ─────────────────────────────────────────────────────
 async function markRead(roomId, by) {
-  const update = by === 'admin'
-    ? { unreadByAdmin: 0 }
-    : { unreadByStudent: 0 };
-
-  await LiveChat.findOneAndUpdate({ roomId }, update);
+  const update = by === 'admin' ? { unreadByAdmin: 0 } : { unreadByStudent: 0 };
+  await LiveChat.updateByRoomId(roomId, update);
 }
 
 // ── Close a session ────────────────────────────────────────────────────────────
 async function closeSession(roomId, closedBy = 'system') {
-  const chat = await LiveChat.findOne({ roomId });
-  if (!chat) throw new Error(`Session not found: ${roomId}`);
+  const updated = await LiveChat.updateByRoomId(roomId, { status: 'closed', closedAt: new Date() });
+  if (!updated) throw new Error(`Session not found: ${roomId}`);
 
-  chat.status   = 'closed';
-  chat.closedAt = new Date();
-  chat.messages.push({
-    sender:     'system',
-    senderName: 'System',
-    text:       `Chat ended by ${closedBy}.`,
-    timestamp:  new Date(),
+  await LiveChat.addMessage(roomId, {
+    sender: 'system', senderName: 'System', text: `Chat ended by ${closedBy}.`,
   });
 
-  await chat.save();
-
   // Free up admin
-  if (chat.adminSocketId) setAdminBusy(chat.adminSocketId, false, null);
+  if (updated.adminSocketId) setAdminBusy(updated.adminSocketId, false, null);
   activeSessions.delete(roomId);
 
   console.log(`[LiveChat] Session closed: ${roomId}`);
-  return chat;
+  return LiveChat.findByRoomId(roomId);
 }
 
 // ── Rate a session ─────────────────────────────────────────────────────────────
 async function rateSession(roomId, rating, feedback = '') {
-  return LiveChat.findOneAndUpdate(
-    { roomId },
-    { rating, feedback },
-    { new: true }
-  );
+  return LiveChat.updateByRoomId(roomId, { rating, feedback });
 }
 
 // ── Get full session ───────────────────────────────────────────────────────────
 async function getSession(roomId) {
-  return LiveChat.findOne({ roomId }).lean();
+  return LiveChat.findByRoomId(roomId);
 }
 
 // ── Get queue for admin panel ──────────────────────────────────────────────────
 async function getQueue() {
-  return LiveChat.find({ status: 'queued' })
-    .sort({ queuedAt: 1 })
-    .select('roomId studentName triggerMessage triggerConfidence queuedAt language')
-    .lean();
+  return LiveChat.getQueue();
 }
 
 async function getActiveChats() {
-  return LiveChat.find({ status: 'active' })
-    .sort({ acceptedAt: -1 })
-    .lean();
+  return LiveChat.getActiveChats();
 }
 
 async function getStats() {
@@ -196,7 +152,7 @@ async function getStats() {
 }
 
 async function getQueuePosition(roomId) {
-  const queue = await LiveChat.find({ status: 'queued' }).sort({ queuedAt: 1 }).lean();
+  const queue = await LiveChat.getQueue();
   const pos   = queue.findIndex(c => c.roomId === roomId);
   return pos === -1 ? null : pos + 1;
 }
