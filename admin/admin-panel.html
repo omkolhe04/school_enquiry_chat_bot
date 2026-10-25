@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>GIT Admin Panel — Dashboard</title>
+  <title>School Chatbot Admin — Dashboard</title>
   <link rel="stylesheet" href="/style.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -319,7 +319,7 @@ body::before {
         </svg>
       </div>
       <div class="sb-brand-text">
-        <h2>GIT Chatbot</h2>
+        <h2>School Chatbot</h2>
         <span>Admin Panel v2.0</span>
       </div>
     </div>
@@ -461,10 +461,7 @@ body::before {
             <button class="fc" onclick="setF('admissions',this)">Admissions</button>
             <button class="fc" onclick="setF('academics',this)">Academics</button>
             <button class="fc" onclick="setF('fees',this)">Fees</button>
-            <button class="fc" onclick="setF('campus',this)">Campus</button>
-            <button class="fc" onclick="setF('hostel',this)">Hostel</button>
-            <button class="fc" onclick="setF('transport',this)">Transport</button>
-            <button class="fc" onclick="setF('placements',this)">Placements</button>
+            <button class="fc" onclick="setF('campus',this)">School Life</button>
             <button class="fc" onclick="setF('contact',this)">Contact</button>
             <button class="fc" onclick="setF('events',this)">Events</button>
             <button class="fc" onclick="setF('general',this)">General</button>
@@ -537,10 +534,7 @@ body::before {
           <option value="admissions">Admissions</option>
           <option value="academics">Academics</option>
           <option value="fees">Fees</option>
-          <option value="campus">Campus</option>
-          <option value="hostel">Hostel</option>
-          <option value="transport">Transport</option>
-          <option value="placements">Placements</option>
+          <option value="campus">School Life (timings, transport, facilities)</option>
           <option value="contact">Contact</option>
           <option value="events">Events</option>
           <option value="general">General</option>
@@ -548,7 +542,7 @@ body::before {
       </div>
       <div class="fg">
         <label>Training Phrases * <span style="font-weight:400;text-transform:none">(one per line)</span></label>
-        <textarea id="m-phrases" rows="5" placeholder="how to apply for admission&#10;what is the admission process&#10;steps to get admission&#10;admission procedure at git"></textarea>
+        <textarea id="m-phrases" rows="5" placeholder="how to apply for admission&#10;what is the admission process&#10;steps to get admission&#10;admission procedure at your school"></textarea>
         <div class="hint">Aim for 8–15 varied phrasings for best NLP accuracy.</div>
       </div>
       <div class="fg">

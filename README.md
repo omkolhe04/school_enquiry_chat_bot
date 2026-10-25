@@ -1,357 +1,202 @@
-# 🎓 AI Chatbot for College Enquiry System
+# 🏫 School Enquiry Chatbot
 
-> A production-ready AI chatbot that answers student queries about college information using custom NLP intent classification, Node.js, Socket.io, and Supabase (Postgres).
+An AI chatbot that answers parents' and students' questions about a school — admissions, age criteria, fees, timings, transport, uniform, exams, facilities and more. Built with Node.js, Socket.io and Supabase, with a custom NLP engine that needs no paid AI API.
 
 ---
 
-## 📸 Features
+## ✨ Features
 
 | Feature | Details |
 |---|---|
-| 🧠 NLP Engine | TF-IDF + Cosine Similarity (custom, no API needed) |
-| 💬 Real-time | Socket.io with typing indicators |
-| 📦 Database | Supabase / Postgres (intents, chat logs, live chats) |
-| 🎨 UI | Animated dark cosmic theme |
-| 🛠️ Admin Panel | Full CRUD for intents |
-| 📊 Analytics | Accuracy, sessions, message stats |
-| 🔁 REST API | Full OpenAPI-compatible endpoints |
-| 🌱 Seed Data | 30+ ready-to-use college intents |
-
----
-
-## 🧮 Mathematical Model
-
-**Intent Classification:**
-```
-Î = argmax P(I | U)
-```
-
-**Confidence Score (Cosine Similarity):**
-```
-confidence = (A · B) / (|A| × |B|)
-```
-Where A = TF-IDF vector of intent training corpus, B = query vector.
-
-**Accuracy:**
-```
-Accuracy = (Correct Predictions / Total Queries) × 100
-```
-Where "Correct" = confidence ≥ threshold (default: 0.35)
+| 🧠 NLP engine | Keyword + stemmed Jaccard similarity intent classifier (no external API) |
+| 📚 Knowledge base | 76 ready-made school intents (`data/schoolIntents.js`) |
+| 🌐 Multilingual | English, Hindi & Marathi |
+| 🎙️ Voice input | Web Speech API |
+| 💬 Live chat | Hands the conversation to a human admin when the bot isn't confident |
+| 🛠️ Admin panel | Add, edit, enable/disable intents; view sessions and stats |
+| 📦 Database | Supabase (Postgres) — intents, chat logs, live chats |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-college-chatbot/
+school-enquiry-chatbot/
 ├── server.js               # Express + Socket.io server
-├── package.json
 ├── .env.example            # Environment variables template
+│
+├── data/
+│   └── schoolIntents.js    # ⭐ The school knowledge base — edit answers here
 │
 ├── config/
 │   └── database.js         # Supabase client
-│
-├── controllers/
-│   ├── chatController.js   # Chat API logic
-│   └── adminController.js  # Admin CRUD logic
-│
-├── routes/
-│   ├── chat.js             # /api/chat routes
-│   └── admin.js            # /api/admin routes
-│
 ├── models/                 # Supabase data-access modules
 │   ├── Intent.js           # intents table
 │   ├── ChatLog.js          # chat_logs + chat_messages tables
 │   └── LiveChat.js         # live_chats + live_chat_messages tables
+├── controllers/            # REST API logic
+├── routes/                 # /api/chat, /api/admin, /api/livechat, /api/translate
+├── services/
+│   ├── nlpService.js       # Intent classifier
+│   ├── liveChatService.js  # Live chat queue & sessions
+│   └── translationService.js
+│
+├── public/                 # Chat website (index.html, chat.js, style.css)
+├── admin/                  # Admin panel + admin live chat console
 │
 ├── supabase/
 │   └── schema.sql          # Tables, functions, RLS — run once in Supabase
-│
-├── services/
-│   └── nlpService.js       # NLP engine (TF-IDF + stemmer)
-│
-├── public/
-│   ├── index.html          # Chat UI
-│   ├── style.css           # Styles (dark cosmic theme)
-│   └── chat.js             # Frontend JS
-│
-├── admin/
-│   └── admin-panel.html    # Admin dashboard
-│
 └── database/
-    └── seed.js             # Seed 30+ intents
+    └── seed.js             # Loads data/schoolIntents.js into Supabase
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Setup
 
 ### Prerequisites
-- Node.js ≥ 18.x
+- Node.js 18+
 - A free [Supabase](https://supabase.com) project
-- npm ≥ 9.x
 
----
-
-### Step 1: Clone / create the project
+### 1. Install
 ```bash
-git clone <repo-url> college-chatbot
-cd college-chatbot
-```
-
-### Step 2: Install dependencies
-```bash
+git clone https://github.com/omkolhe04/school_enquiry_chat_bot.git
+cd school_enquiry_chat_bot
 npm install
 ```
 
-### Step 3: Configure environment
+### 2. Create the database tables
+1. In your Supabase project, open **SQL Editor → New query**.
+2. Paste the contents of `supabase/schema.sql` and click **Run**.
+
+### 3. Configure `.env`
 ```bash
 cp .env.example .env
-# Edit .env with your values
 ```
+Fill in:
 
-**Key `.env` variables:**
-```env
-PORT=3000
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-CONFIDENCE_THRESHOLD=0.35
-COLLEGE_NAME=Greenfield Institute of Technology
-COLLEGE_PHONE=+1-800-555-0100
-COLLEGE_EMAIL=admissions@git.edu
-COLLEGE_WEBSITE=https://www.git.edu
-COLLEGE_ADDRESS=123 University Avenue, Tech City, TC 45678
-```
+| Variable | Where to find it |
+|---|---|
+| `SUPABASE_URL` | Supabase → Project Settings → API → **Project URL** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** key |
+| `SCHOOL_NAME`, `SCHOOL_PHONE`, `SCHOOL_EMAIL`, `SCHOOL_WEBSITE`, `SCHOOL_ADDRESS` | Your school's details — shown on the website and in bot replies |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Admin panel login — **change the defaults** |
 
-### Step 4: Create the Supabase tables
-1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor → New query**, paste the contents of `supabase/schema.sql`, and click **Run**.
-3. From **Project Settings → API**, copy the **Project URL** into `SUPABASE_URL` and the
-   **service_role** key into `SUPABASE_SERVICE_ROLE_KEY`.
+> The service_role key bypasses Row Level Security, so keep it server-side only (`.env` is git-ignored). RLS is enabled on every table with no policies, so the public anon key can't read or write anything.
 
-> The service_role key bypasses Row Level Security, so keep it server-side only (it lives in `.env`,
-> which is git-ignored). RLS is enabled on every table with no policies, so the public anon key
-> can't read or write anything.
-
-### Step 5: Seed the database
+### 4. Load the school intents
 ```bash
 npm run seed
 ```
-This inserts **30+ pre-built intents** covering all college topics.
 
-### Step 6: Start the server
+### 5. Run
 ```bash
-# Production
-npm start
-
-# Development (with auto-reload)
-npm run dev
+npm start        # production
+npm run dev      # development, auto-reload
 ```
 
-### Step 7: Open the app
-| URL | Description |
+| URL | Page |
 |---|---|
-| `http://localhost:3000` | 💬 Chat UI |
-| `http://localhost:3000/admin` | 🛠️ Admin Panel |
-| `http://localhost:3000/api/health` | ❤️ Health check |
+| http://localhost:3000 | 💬 Chat website |
+| http://localhost:3000/admin | 🛠️ Admin panel |
+| http://localhost:3000/admin/chat | 🎧 Admin live chat console |
+
+---
+
+## ✏️ Customising for Your School
+
+The answers in `data/schoolIntents.js` use **sample values** for a typical CBSE day school in India (fees, timings, age criteria, bus routes…). Before going live:
+
+1. Set your school's details in `.env` — these fill `{{SCHOOL_NAME}}`, `{{PHONE}}`, `{{EMAIL}}`, `{{WEBSITE}}` and `{{ADDRESS}}` in every answer.
+2. Edit the answers either:
+   - in `data/schoolIntents.js`, then run `npm run seed` again (this **replaces** all intents in the database), or
+   - in the **Admin Panel → Intents**, which edits the database directly.
+3. Update the highlight slides and stat tiles in `public/index.html` (search for `ci-slide` and `ci-tile`).
+
+Intents saved in the database override built-in intents with the same name, so the bot keeps working even before you seed.
+
+### Intent format
+```js
+{
+  intentName: 'school_timings',          // unique id
+  displayName: 'School Timings',         // label in the admin panel
+  category: 'campus',                    // admissions | academics | fees | campus | contact | events | general
+  keywords: ['timing', 'school hours'],  // matter most for short questions
+  trainingPhrases: ['what are the school timings'], // matter most for long questions
+  responses: ['⏰ School runs 7:45 AM – 2:15 PM…'], // one is picked at random
+}
+```
+
+### Tuning
+```env
+CONFIDENCE_THRESHOLD=0.35   # minimum score to answer; raise for stricter matching
+LIVE_CHAT_THRESHOLD=0.25    # below this, the user is offered live chat with an admin
+```
+
+---
+
+## 🧠 What the Bot Knows
+
+| Category | Topics |
+|---|---|
+| Admissions | Process, dates, age criteria, documents, entrance test, seats, mid-year transfer, RTE 25%, Class 11 streams, status, cancellation, campus visit, TC & certificates |
+| Fees | Fee structure, payment methods, instalments, late fee, sibling concession, scholarships, other charges, transport fee |
+| Academics | Classes, curriculum (CBSE/NCERT/NEP), subjects, exams, results, homework, attendance, PTMs, remedial classes, special needs, books, parent app, teachers |
+| School life | Timings, holidays, uniform, canteen, phone policy, discipline, facilities, library, labs, medical, daycare, hostel (day school), bus, bus safety, pickup, safety, anti-bullying, counselling |
+| Events | Sports, clubs & activities, annual events, trips & camps, Olympiads, scouts & guides |
+| Contact | Phone & email, address, office hours, website, complaints, jobs |
+| General | Greetings, about the school, board, medium, co-ed, principal |
 
 ---
 
 ## 🔌 API Reference
 
-### Chat API
-
-#### `POST /api/chat`
-Send a user message and get NLP response.
-
-**Request:**
-```json
-{
-  "message": "How do I apply for admission?",
-  "sessionId": "sess-1234567-abc",
-  "userId": "optional-user-id"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "sessionId": "sess-1234567-abc",
-  "message": "📋 Admission Process at GIT:\n1. Fill online form...",
-  "intent": "admission_process",
-  "displayName": "Admission Process",
-  "confidence": 0.8231,
-  "entities": [],
-  "isFallback": false,
-  "topScores": [
-    { "intent": "admission_process", "score": 0.8231 },
-    { "intent": "admission_eligibility", "score": 0.3104 }
-  ]
-}
-```
-
-#### `GET /api/chat/stats`
-```json
-{
-  "success": true,
-  "stats": {
-    "totalSessions": 142,
-    "totalMessages": 1847,
-    "totalResolved": 1693,
-    "totalFallback": 154,
-    "accuracy": 91.65
-  }
-}
-```
-
-#### `GET /api/chat/history/:sessionId`
-Returns full message history for a session.
-
----
-
-### Admin API
-
-All admin routes require: `Authorization: Bearer <base64(user:pass)>`
-
-#### `POST /api/admin/login`
-```json
-{ "username": "admin", "password": "admin123" }
-```
-Returns `{ "token": "..." }`
-
-#### `GET /api/admin/intents`
-Returns all intents with training phrases and responses.
-
-#### `POST /api/admin/intents`
-Create a new intent.
-
-#### `PUT /api/admin/intents/:id`
-Update an existing intent.
-
-#### `DELETE /api/admin/intents/:id`
-Delete an intent.
-
-#### `POST /api/admin/intents/:id/toggle`
-Activate or deactivate an intent.
-
----
-
-## 🧠 Supported Intents (30+)
-
-| Intent | Category | Example Query |
+### Chat
+| Method | Endpoint | Description |
 |---|---|---|
-| `greetings` | General | "Hello", "Hi there" |
-| `about_college` | General | "Tell me about the college" |
-| `admission_process` | Admissions | "How do I apply for admission?" |
-| `admission_eligibility` | Admissions | "What is the eligibility criteria?" |
-| `admission_dates` | Admissions | "When does admission start?" |
-| `course_details` | Academics | "What courses are offered?" |
-| `course_duration` | Academics | "How long is B.Tech?" |
-| `syllabus` | Academics | "What is the syllabus?" |
-| `fee_structure` | Fees | "What is the fee structure?" |
-| `fee_payment` | Fees | "How to pay fees online?" |
-| `scholarships` | Fees | "Are scholarships available?" |
-| `exam_schedule` | Academics | "When are the exams?" |
-| `exam_results` | Academics | "How to check results?" |
-| `backlog_reappear` | Academics | "How to clear backlog?" |
-| `faculty_information` | Academics | "Who are the professors?" |
-| `hod_contacts` | Academics | "Contact the CSE HOD" |
-| `campus_facilities` | Campus | "What facilities are available?" |
-| `hostel_details` | Campus | "Is hostel available?" |
-| `library` | Campus | "Library timings?" |
-| `placements` | Campus | "What is the placement record?" |
-| `transport_bus` | Campus | "Is there a bus service?" |
-| `internship` | Campus | "How to get internship?" |
-| `sports_facilities` | Campus | "Is there a gym?" |
-| `research` | Academics | "Research opportunities?" |
-| `events` | Events | "What events are coming up?" |
-| `clubs_societies` | Events | "What clubs are there?" |
-| `contact_details` | Contact | "What is the contact number?" |
-| `location_directions` | Contact | "How to reach the college?" |
-| `affiliation` | General | "Is college approved by AICTE?" |
-| `anti_ragging` | General | "Anti-ragging policy?" |
-| `thanks` | General | "Thank you!" |
+| `POST` | `/api/chat` | `{ message, sessionId }` → bot reply with intent & confidence |
+| `GET` | `/api/chat/history/:sessionId` | Messages for a session |
+| `GET` | `/api/chat/sessions` | Paginated sessions |
+| `GET` | `/api/chat/stats` | Totals and accuracy |
+| `GET` | `/api/config` | Public school details from `.env` |
+| `GET` | `/api/health` | Health check |
 
----
+### Admin (header `Authorization: Bearer <base64(user:pass)>`)
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/admin/login` | `{ username, password }` → `{ token }` |
+| `GET` | `/api/admin/intents` | List intents (`?category=fees`) |
+| `POST` | `/api/admin/intents` | Create intent |
+| `PUT` | `/api/admin/intents/:id` | Update intent |
+| `DELETE` | `/api/admin/intents/:id` | Delete intent |
+| `POST` | `/api/admin/intents/:id/toggle` | Enable / disable |
 
-## 🌐 Socket.io Events
+### Live chat (admin)
+`GET /api/livechat/queue` · `/active` · `/stats` · `/history` · `/session/:roomId` · `POST /api/livechat/session/:roomId/close`
+Public: `POST /api/livechat/session/:roomId/rate` — `{ rating: 1–5, feedback }`
 
+### Socket.io events
 | Event | Direction | Description |
 |---|---|---|
-| `chat_message` | Client → Server | Send user message |
-| `bot_typing` | Server → Client | Show/hide typing indicator |
-| `bot_response` | Server → Client | Bot reply with NLP metadata |
-
-**Client example:**
-```javascript
-const socket = io();
-socket.emit('chat_message', {
-  message: 'What courses do you offer?',
-  sessionId: 'sess-abc123'
-});
-socket.on('bot_response', (data) => {
-  console.log(data.message, data.confidence);
-});
-```
+| `chat_message` | client → server | `{ message, sessionId, language }` |
+| `bot_response` | server → client | Reply with intent, confidence, `canEscalate` |
+| `request_live_chat` | client → server | Join the admin queue |
+| `admin_register` / `admin_accept_chat` | admin → server | Go online / take a chat |
+| `live_chat_message` | both | Message in a live chat room |
+| `end_live_chat` | both | Close the chat |
 
 ---
 
-## 🐳 Docker (Optional)
+## 🛡️ Before Going Live
 
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-```bash
-docker build -t college-chatbot .
-docker run -p 3000:3000 --env-file .env college-chatbot
-```
-
----
-
-## 📈 Customisation
-
-### Adding a new intent
-1. Via Admin Panel → Intents → + New Intent
-2. Or add to `database/seed.js` and re-run `npm run seed`
-3. Or POST to `/api/admin/intents` directly
-
-### Changing confidence threshold
-```env
-CONFIDENCE_THRESHOLD=0.40   # increase for stricter matching
-```
-
-### Personalising responses
-Use template variables in responses:
-- `{{COLLEGE_NAME}}` → College name from .env
-- `{{PHONE}}` → College phone
-- `{{EMAIL}}` → Contact email
-- `{{WEBSITE}}` → Website URL
-- `{{ADDRESS}}` → Physical address
-
----
-
-## 🛡️ Production Checklist
-
-- [ ] Set strong `ADMIN_PASSWORD` in .env
+- [ ] Replace the sample fees, timings and other figures with your school's real details
+- [ ] Set a strong `ADMIN_PASSWORD`
 - [ ] Keep `SUPABASE_SERVICE_ROLE_KEY` secret (never ship it to the browser)
-- [ ] Enable HTTPS (use nginx / Caddy as reverse proxy)
-- [ ] Set `NODE_ENV=production`
-- [ ] Use PM2 for process management: `pm2 start server.js`
-- [ ] Set up log rotation
-- [ ] Configure rate limiting (add `express-rate-limit`)
+- [ ] Serve over HTTPS (e.g. behind nginx or Caddy) and set `NODE_ENV=production`
+- [ ] Add rate limiting (e.g. `express-rate-limit`)
 
 ---
 
 ## 📄 License
 
-MIT © College Chatbot Team
+MIT

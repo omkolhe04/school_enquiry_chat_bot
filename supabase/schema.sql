@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
---  College Chatbot — Supabase (Postgres) schema
+--  School Enquiry Chatbot — Supabase (Postgres) schema
 --  Run this once in the Supabase dashboard → SQL Editor → New query → Run.
 --  Safe to re-run: everything uses IF NOT EXISTS / CREATE OR REPLACE.
 -- ─────────────────────────────────────────────────────────────────────────────

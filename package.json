@@ -1,7 +1,7 @@
 {
-  "name": "college-chatbot",
+  "name": "school-enquiry-chatbot",
   "version": "1.0.0",
-  "description": "AI Chatbot for College Enquiry System — Intent-based NLP with Supabase & Socket.io",
+  "description": "AI Chatbot for School Enquiry System — Intent-based NLP with Supabase & Socket.io",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -23,11 +23,12 @@
   },
   "keywords": [
     "chatbot",
-    "college",
+    "school",
+    "school-enquiry",
     "nlp",
     "nodejs",
     "supabase"
   ],
-  "author": "College Chatbot Team",
+  "author": "omkolhe04",
   "license": "MIT"
 }

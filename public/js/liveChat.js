@@ -31,7 +31,7 @@ const LiveChatUI = (() => {
           <div class="lc-header-info">
             <div class="lc-header-avatar">👨‍💼</div>
             <div class="lc-header-text">
-              <strong id="lc-admin-name">College Support</strong>
+              <strong id="lc-admin-name">School Support</strong>
               <span class="lc-status-badge" id="lc-status-badge">
                 <span class="lc-status-dot"></span>
                 <span id="lc-status-text">Connecting…</span>

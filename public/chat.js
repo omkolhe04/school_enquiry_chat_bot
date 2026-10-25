@@ -35,7 +35,7 @@ const voiceStatus = document.getElementById('voice-status');
 /* ══════════════════════════════════════════════════════
    OFFLINE KEYWORD DICTIONARY
    Used when all network translation fails.
-   Maps Hindi/Marathi → English for common college queries.
+   Maps Hindi/Marathi → English for common school enquiry queries.
 ══════════════════════════════════════════════════════ */
 const KEYWORD_DICT = {
   /* ── Greetings ── */
@@ -54,53 +54,47 @@ const KEYWORD_DICT = {
 
   /* ── Fees ── */
   'फीस':'fees', 'फीज':'fees', 'शुल्क':'fees', 'फ़ीस':'fees',
-  'ट्यूशन फीस':'tuition fees', 'परीक्षा शुल्क':'exam fees',
-  'हॉस्टल फीस':'hostel fees', 'बस फीस':'bus fees',
+  'ट्यूशन फीस':'tuition fees', 'बस फीस':'bus fees', 'बस शुल्क':'bus fees',
   'कितनी फीस':'how much fees', 'फीस कितनी है':'what is the fees',
-  'हॉस्टेल फीज':'hostel fees', 'शुल्क माहिती':'fees information',
+  'शुल्क माहिती':'fees information', 'हप्ता':'instalment', 'किस्त':'instalment',
+  'सवलत':'concession', 'छूट':'concession',
 
-  /* ── Hostel ── */
-  'छात्रावास':'hostel', 'होस्टल':'hostel', 'हॉस्टल':'hostel', 'हॉस्टेल':'hostel',
-  'वसतिगृह':'hostel', 'छात्रावास सुविधा':'hostel facility',
-  'कमरा':'room', 'रूम':'room', 'मेस':'mess canteen',
-  'खाना':'food mess', 'भोजन':'food',
-
-  /* ── Courses ── */
-  'पाठ्यक्रम':'courses', 'कोर्स':'course', 'विषय':'subject',
-  'अभ्यासक्रम':'courses', 'इंजीनियरिंग':'engineering',
-  'कंप्यूटर साइंस':'computer science', 'मैकेनिकल':'mechanical engineering',
-  'इलेक्ट्रिकल':'electrical engineering', 'सिविल':'civil engineering',
-  'इलेक्ट्रॉनिक्स':'electronics', 'आईटी':'information technology',
-  'अभियांत्रिकी':'engineering', 'संगणक':'computer',
-  'यांत्रिकी':'mechanical', 'विद्युत':'electrical', 'स्थापत्य':'civil',
+  /* ── School / Classes ── */
+  'स्कूल':'school', 'शाळा':'school', 'विद्यालय':'school',
+  'कक्षा':'class', 'इयत्ता':'class', 'वर्ग':'class', 'क्लास':'class',
+  'नर्सरी':'nursery', 'बालवाडी':'nursery', 'केजी':'kg',
+  'उम्र':'age', 'वय':'age', 'आयु':'age',
+  'बोर्ड':'board', 'सीबीएसई':'cbse', 'माध्यम':'medium',
+  'शिक्षक':'teacher', 'शिक्षिका':'teacher', 'अध्यापक':'teacher',
+  'मुख्याध्यापक':'principal', 'प्रिंसिपल':'principal', 'प्रधानाचार्य':'principal',
+  'विषय':'subjects', 'पाठ्यक्रम':'curriculum', 'अभ्यासक्रम':'curriculum',
+  'गृहपाठ':'homework', 'होमवर्क':'homework',
+  'किताबें':'books', 'पुस्तके':'books', 'पुस्तकें':'books',
+  'गणवेश':'uniform', 'वर्दी':'uniform', 'यूनिफॉर्म':'uniform',
+  'डबा':'tiffin', 'टिफिन':'tiffin', 'खाना':'food', 'जेवण':'food',
+  'सुट्टी':'holiday', 'छुट्टी':'holiday', 'छुट्टियां':'holidays',
+  'वेळ':'timing', 'शाळेची वेळ':'school timings', 'स्कूल का समय':'school timings',
+  'दाखला':'transfer certificate', 'टीसी':'transfer certificate',
 
   /* ── Transport ── */
   'परिवहन':'transport', 'बस':'bus', 'बस सुविधा':'bus facility',
-  'बस रूट':'bus route', 'बस टाइम':'bus timing',
-  'वाहतूक':'transport', 'बस वेळ':'bus timing',
+  'स्कूल बस':'school bus', 'वाहतूक':'transport', 'वैन':'van',
 
   /* ── Exams ── */
   'परीक्षा':'exam', 'इम्तिहान':'exam', 'एग्जाम':'exam',
-  'परिणाम':'result', 'रिजल्ट':'result', 'मार्कशीट':'marksheet',
-  'टाइम टेबल':'timetable', 'समय सारणी':'timetable',
-  'वेळापत्रक':'timetable', 'परीक्षा वेळापत्रक':'exam timetable',
+  'परिणाम':'result', 'रिजल्ट':'result', 'निकाल':'result', 'मार्कशीट':'report card',
+  'टाइम टेबल':'timetable', 'वेळापत्रक':'timetable',
 
-  /* ── Placements ── */
-  'प्लेसमेंट':'placement', 'नौकरी':'job placement', 'रोजगार':'employment',
-  'कैंपस प्लेसमेंट':'campus placement', 'कंपनी':'company',
-  'इंटर्नशिप':'internship', 'नोकरी':'job placement',
-
-  /* ── Campus / Facilities ── */
+  /* ── Facilities / Activities ── */
   'लाइब्रेरी':'library', 'पुस्तकालय':'library', 'ग्रंथालय':'library',
   'कैंटीन':'canteen', 'कॅन्टीन':'canteen',
-  'खेल':'sports', 'स्पोर्ट्स':'sports', 'क्रीडा':'sports',
-  'लैब':'laboratory', 'प्रयोगशाला':'laboratory',
-  'सुविधा':'facilities', 'क्लास':'classroom',
-  'कैंपस':'campus', 'परिसर':'campus',
+  'खेल':'sports', 'स्पोर्ट्स':'sports', 'क्रीडा':'sports', 'मैदान':'playground',
+  'लैब':'lab', 'प्रयोगशाला':'lab', 'सुविधा':'facilities',
+  'सुरक्षा':'safety', 'उपक्रम':'activities', 'गतिविधियां':'activities',
+  'कार्यक्रम':'events', 'स्नेहसंमेलन':'annual day', 'वार्षिकोत्सव':'annual day',
 
   /* ── Scholarship ── */
-  'छात्रवृत्ति':'scholarship', 'वजीफा':'scholarship',
-  'शिष्यवृत्ती':'scholarship', 'स्कॉलरशिप':'scholarship',
+  'छात्रवृत्ति':'scholarship', 'शिष्यवृत्ती':'scholarship', 'स्कॉलरशिप':'scholarship',
 
   /* ── Contact / Address ── */
   'संपर्क':'contact', 'फ़ोन':'phone contact', 'नंबर':'contact number',
@@ -537,9 +531,9 @@ function showChips() { if (chipsEl) chipsEl.style.display = 'flex'; }
 function showWelcomeMsg() {
   const lang = curLang();
   const msgs = {
-    en: '👋 Welcome to **PDEA Campus Assistant**!\n\nI support:\n• 🎙️ **Voice Input** — click the mic\n• 🌐 **Hindi & Marathi** — change language above\n• 💬 **Live Chat** — connect to admin if needed\n\nAsk me about:\n📋 Admissions | 💰 Fees | 🏠 Hostel | 🚌 Transport\n📚 Courses | 💼 Placements | 📅 Exams | 🏛️ Campus\n\nType your question! 😊',
-    hi: '👋 **PDEA कैंपस असिस्टेंट** में स्वागत है!\n\nमैं इनका समर्थन करता हूँ:\n• 🎙️ **वॉइस इनपुट** — माइक बटन दबाएं\n• 🌐 **हिंदी और मराठी** — ऊपर भाषा बदलें\n• 💬 **लाइव चैट** — एडमिन से जोड़ें\n\nपूछें:\n📋 प्रवेश | 💰 शुल्क | 🏠 छात्रावास | 🚌 परिवहन\n📚 पाठ्यक्रम | 💼 प्लेसमेंट | 📅 परीक्षा\n\nअपना सवाल लिखें! 😊',
-    mr: '👋 **PDEA कॅम्पस सहाय्यक** मध्ये स्वागत!\n\nमी सपोर्ट करतो:\n• 🎙️ **व्हॉइस इनपुट** — मायक बटण दाबा\n• 🌐 **मराठी आणि हिंदी** — वर भाषा बदला\n• 💬 **लाइव्ह चॅट** — अ‍ॅडमिनशी जोडा\n\nविचारा:\n📋 प्रवेश | 💰 शुल्क | 🏠 वसतिगृह | 🚌 वाहतूक\n📚 अभ्यासक्रम | 💼 नोकरी | 📅 परीक्षा\n\nप्रश्न विचारा! 😊',
+    en: '👋 Welcome to the **School Enquiry Assistant**!\n\nI support:\n• 🎙️ **Voice Input** — click the mic\n• 🌐 **Hindi & Marathi** — change language above\n• 💬 **Live Chat** — talk to our admissions team if needed\n\nAsk me about:\n📋 Admissions | 🎂 Age criteria | 💰 Fees | 🚌 Transport\n⏰ Timings | 👕 Uniform | 📝 Exams | 🏫 Facilities\n\nType your question! 😊',
+    hi: '👋 **स्कूल प्रवेश सहायक** में आपका स्वागत है!\n\nमैं इनका समर्थन करता हूँ:\n• 🎙️ **वॉइस इनपुट** — माइक बटन दबाएं\n• 🌐 **हिंदी और मराठी** — ऊपर भाषा बदलें\n• 💬 **लाइव चैट** — प्रवेश टीम से बात करें\n\nपूछें:\n📋 प्रवेश | 🎂 आयु सीमा | 💰 फीस | 🚌 स्कूल बस\n⏰ स्कूल का समय | 👕 यूनिफॉर्म | 📝 परीक्षा\n\nअपना सवाल लिखें! 😊',
+    mr: '👋 **शाळा प्रवेश सहाय्यक** मध्ये आपले स्वागत!\n\nमी सपोर्ट करतो:\n• 🎙️ **व्हॉइस इनपुट** — मायक बटण दाबा\n• 🌐 **मराठी आणि हिंदी** — वर भाषा बदला\n• 💬 **लाइव्ह चॅट** — प्रवेश टीमशी बोला\n\nविचारा:\n📋 प्रवेश | 🎂 वयोमर्यादा | 💰 शुल्क | 🚌 स्कूल बस\n⏰ शाळेची वेळ | 👕 गणवेश | 📝 परीक्षा\n\nप्रश्न विचारा! 😊',
   };
   setTimeout(() => renderBotMsg(msgs[lang] || msgs.en, 'greetings', 1.0, false), 400);
 }
@@ -549,8 +543,9 @@ function showWelcomeMsg() {
 ══════════════════════════════════════════════════════ */
 async function loadStats() {
   try {
-    const data = await fetch('/api/chat/stats').then(r => r.json());
-    if (!data.success) return;
+    const res  = await fetch('/api/chat/stats').then(r => r.json());
+    if (!res.success) return;
+    const data = res.stats || {};
     const el = document.getElementById('stats-bar');
     if (el) el.innerHTML = `
       <span>🤖 ${data.totalSessions||0} sessions</span>

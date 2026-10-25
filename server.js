@@ -1,6 +1,6 @@
 /**
  * server.js — v2.0
- * College Chatbot — Main Application Entry Point
+ * School Enquiry Chatbot — Main Application Entry Point
  * ─────────────────────────────────────────────────────────────────────────────
  * Features:
  *   · REST API  (chat, admin, live-chat, translation)
@@ -67,10 +67,24 @@ app.use('/api/admin',      adminRoutes);
 app.use('/api/livechat',   liveChatRoutes);
 app.use('/api/translate',  translationRoutes);
 
+// Public school details for the website (name, contact) — set in .env
+app.get('/api/config', (req, res) => {
+  res.json({
+    success: true,
+    school: {
+      name:    process.env.SCHOOL_NAME    || 'Greenfield Public School',
+      phone:   process.env.SCHOOL_PHONE   || '',
+      email:   process.env.SCHOOL_EMAIL   || '',
+      website: process.env.SCHOOL_WEBSITE || '',
+      address: process.env.SCHOOL_ADDRESS || '',
+    },
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status:    'ok',
-    service:   'College Chatbot API v2.0',
+    service:   'School Enquiry Chatbot API v2.0',
     features:  ['nlp', 'voice', 'multilingual', 'live-chat'],
     timestamp: new Date().toISOString(),
   });
@@ -416,7 +430,7 @@ async function persistChatLog(sessionId, userId, message, nlpResult, language) {
 
   server.listen(PORT, () => {
     console.log('\n╔══════════════════════════════════════════════════════╗');
-    console.log('║   🎓  College Chatbot Server v2.0 — RUNNING           ║');
+    console.log('║   🏫  School Enquiry Chatbot v2.0 — RUNNING           ║');
     console.log('╠══════════════════════════════════════════════════════╣');
     console.log(`║   🌐  Chat UI       → http://localhost:${PORT}             ║`);
     console.log(`║   🛠️   Admin Panel   → http://localhost:${PORT}/admin       ║`);

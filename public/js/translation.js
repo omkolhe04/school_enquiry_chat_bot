@@ -25,7 +25,7 @@ const Translation = (() => {
       sendTitle:   'Send message',
       micTitle:    'Voice input',
       liveChatBtn: '💬 Chat with Admin',
-      typingText:  'GIT Assistant is typing…',
+      typingText:  'Assistant is typing…',
       youLabel:    'You',
     },
     hi: {
@@ -33,7 +33,7 @@ const Translation = (() => {
       sendTitle:   'संदेश भेजें',
       micTitle:    'आवाज़ इनपुट',
       liveChatBtn: '💬 एडमिन से बात करें',
-      typingText:  'GIT सहायक लिख रहा है…',
+      typingText:  'सहायक लिख रहा है…',
       youLabel:    'आप',
     },
     mr: {
@@ -41,7 +41,7 @@ const Translation = (() => {
       sendTitle:   'संदेश पाठवा',
       micTitle:    'आवाज इनपुट',
       liveChatBtn: '💬 अ‍ॅडमिनशी बोला',
-      typingText:  'GIT सहाय्यक लिहित आहे…',
+      typingText:  'सहाय्यक लिहित आहे…',
       youLabel:    'तुम्ही',
     },
   };

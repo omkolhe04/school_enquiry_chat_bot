@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>PDEA Chatbot — Student Assistant</title>
+  <title>School Enquiry Assistant</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
 /* ══════════════════════════════════════════════
@@ -481,7 +481,7 @@ body::before {
 
 
 /* ══════════════════════════════════════════════════════════
-   COLLEGE INFO SECTION  — scrollable, below chat viewport
+   SCHOOL INFO SECTION  — scrollable, below chat viewport
 ══════════════════════════════════════════════════════════ */
 
 /* ── scroll-down nudge on chat section ── */
@@ -511,8 +511,8 @@ body::before {
   to   { transform: translateY(4px); }
 }
 
-/* ── college info section ── */
-.college-info {
+/* ── school info section ── */
+.school-info {
   background: var(--bg);
   padding: 0 0 2rem;
 }
@@ -743,8 +743,8 @@ body::before {
     </svg>
   </div>
   <div class="header-brand">
-    <h1>PDEA College Assistant</h1>
-    <span>Government Institute of Technology · AI Chatbot</span>
+    <h1><span data-school-name>Greenfield Public School</span></h1>
+    <span>School Enquiry Assistant · AI Chatbot</span>
   </div>
   <div class="header-status">
     <span class="status-dot online"></span> Online
@@ -778,7 +778,7 @@ body::before {
         </svg>
       </div>
       <div class="bot-info">
-        <strong>PDEA Assistant</strong>
+        <strong>Enquiry Assistant</strong>
         <div class="bot-info-sub">
           <span class="status-dot online"></span>
           <span>Powered by AI · Typically replies instantly</span>
@@ -812,13 +812,13 @@ body::before {
 
     <!-- Quick chips -->
     <div id="quick-chips">
-      <button class="chip">📋 Admissions</button>
-      <button class="chip">💳 Fees</button>
-      <button class="chip">🏫 Campus</button>
-      <button class="chip">🎓 Courses</button>
-      <button class="chip">🏠 Hostel</button>
-      <button class="chip">🚌 Transport</button>
-      <button class="chip">📞 Contact</button>
+      <button class="chip" data-query="How do I apply for admission?">📋 Admissions</button>
+      <button class="chip" data-query="What is the age criteria for admission?">🎂 Age criteria</button>
+      <button class="chip" data-query="What is the fee structure?">💳 Fees</button>
+      <button class="chip" data-query="What are the school timings?">⏰ Timings</button>
+      <button class="chip" data-query="Is school bus available?">🚌 Transport</button>
+      <button class="chip" data-query="What facilities does the school have?">🏫 Facilities</button>
+      <button class="chip" data-query="What is the contact number?">📞 Contact</button>
     </div>
 
     <!-- Input bar -->
@@ -826,7 +826,7 @@ body::before {
       <input
         type="text"
         id="chat-input"
-        placeholder="Ask me anything about PDEA…"
+        placeholder="Ask about admissions, fees, timings…"
         autocomplete="off"
         autocorrect="off"
       />
@@ -867,18 +867,18 @@ body::before {
 
 
 <!-- ══════════════════════════════════════════════════
-     COLLEGE INFO SECTION — visible on scroll
+     SCHOOL INFO SECTION — visible on scroll
 ══════════════════════════════════════════════════ -->
-<section class="college-info" id="college-info">
+<section class="school-info" id="school-info">
 
   <!-- Section header -->
   <div class="ci-head">
     <div class="ci-head-left">
       <div class="ci-eyebrow">
         <span class="ci-eyebrow-dot"></span>
-        <span class="ci-eyebrow-text">About PDEA College</span>
+        <span class="ci-eyebrow-text">About <span data-school-name>Greenfield Public School</span></span>
       </div>
-      <h2 class="ci-h2">Discover Our Campus</h2>
+      <h2 class="ci-h2">Discover Our School</h2>
       <p class="ci-sub">Swipe through highlights &amp; scroll to explore stats</p>
     </div>
   </div>
@@ -895,82 +895,82 @@ body::before {
     <div class="ci-carousel__track-wrap">
       <div class="ci-carousel__track" id="ci-track">
 
-        <!-- Slide 1: Placements -->
+        <!-- Slide 1: CBSE Results -->
         <div class="ci-slide s1">
           <div class="ci-slide__bg">🎓</div>
           <div class="ci-slide__overlay"></div>
           <div class="ci-slide__content">
             <div>
-              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Placements 2025</div>
-              <div class="ci-slide__title">95% of graduates secured jobs at top MNCs &amp; startups</div>
+              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> CBSE Results</div>
+              <div class="ci-slide__title">100% pass rate in Class 10 &amp; 12 board exams, with 40% scoring above 90%</div>
             </div>
             <div class="ci-slide__stat">
-              <div class="ci-slide__stat-num">95%</div>
-              <div class="ci-slide__stat-label">Placement rate</div>
+              <div class="ci-slide__stat-num">100%</div>
+              <div class="ci-slide__stat-label">Board pass rate</div>
             </div>
           </div>
         </div>
 
-        <!-- Slide 2: NAAC -->
+        <!-- Slide 2: Affiliation -->
         <div class="ci-slide s2">
-          <div class="ci-slide__bg">🏆</div>
+          <div class="ci-slide__bg">📜</div>
           <div class="ci-slide__overlay"></div>
           <div class="ci-slide__content">
             <div>
-              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Accreditation</div>
-              <div class="ci-slide__title">Awarded A++ grade by NAAC — highest national recognition</div>
+              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Affiliation</div>
+              <div class="ci-slide__title">CBSE-affiliated, English-medium, co-educational school from Playgroup to Class 12</div>
             </div>
             <div class="ci-slide__stat">
-              <div class="ci-slide__stat-num">A++</div>
-              <div class="ci-slide__stat-label">NAAC Grade</div>
+              <div class="ci-slide__stat-num">CBSE</div>
+              <div class="ci-slide__stat-label">Playgroup – XII</div>
             </div>
           </div>
         </div>
 
         <!-- Slide 3: Campus -->
         <div class="ci-slide s3">
-          <div class="ci-slide__bg">🌿</div>
+          <div class="ci-slide__bg">🌳</div>
           <div class="ci-slide__overlay"></div>
           <div class="ci-slide__content">
             <div>
-              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Campus Life</div>
-              <div class="ci-slide__title">50-acre Wi-Fi enabled green campus with modern facilities</div>
+              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Campus</div>
+              <div class="ci-slide__title">Green, CCTV-secured campus with smart classrooms, labs and a large playground</div>
             </div>
             <div class="ci-slide__stat">
-              <div class="ci-slide__stat-num">50 Ac</div>
+              <div class="ci-slide__stat-num">5 Ac</div>
               <div class="ci-slide__stat-label">Green campus</div>
             </div>
           </div>
         </div>
 
-        <!-- Slide 4: Students -->
+        <!-- Slide 4: All-round Growth -->
         <div class="ci-slide s4">
-          <div class="ci-slide__bg">👨‍🎓</div>
+          <div class="ci-slide__bg">🎨</div>
           <div class="ci-slide__overlay"></div>
           <div class="ci-slide__content">
             <div>
-              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Community</div>
-              <div class="ci-slide__title">Over 5,000 students across UG, PG and doctoral programs</div>
+              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> All-round Growth</div>
+              <div class="ci-slide__title">Sports, music, dance, art, robotics and 15+ clubs for every child</div>
             </div>
             <div class="ci-slide__stat">
-              <div class="ci-slide__stat-num">5K+</div>
-              <div class="ci-slide__stat-label">Students enrolled</div>
+              <div class="ci-slide__stat-num">15+</div>
+              <div class="ci-slide__stat-label">Clubs &amp; activities</div>
             </div>
           </div>
         </div>
 
-        <!-- Slide 5: Research -->
+        <!-- Slide 5: Safe Transport -->
         <div class="ci-slide s5">
-          <div class="ci-slide__bg">🔬</div>
+          <div class="ci-slide__bg">🚌</div>
           <div class="ci-slide__overlay"></div>
           <div class="ci-slide__content">
             <div>
-              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Infrastructure</div>
-              <div class="ci-slide__title">40+ state-of-the-art laboratories and research centres</div>
+              <div class="ci-slide__tag"><span class="ci-slide__tag-dot"></span> Safe Transport</div>
+              <div class="ci-slide__title">GPS-tracked buses with CCTV and a female attendant on every route</div>
             </div>
             <div class="ci-slide__stat">
-              <div class="ci-slide__stat-num">40+</div>
-              <div class="ci-slide__stat-label">Labs &amp; centres</div>
+              <div class="ci-slide__stat-num">30+</div>
+              <div class="ci-slide__stat-label">School buses</div>
             </div>
           </div>
         </div>
@@ -995,58 +995,58 @@ body::before {
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-        <div class="ci-tile__num">1985</div>
+        <div class="ci-tile__num">1998</div>
         <div class="ci-tile__label">Established</div>
-        <div class="ci-tile__desc">40+ years of excellence</div>
+        <div class="ci-tile__desc">25+ years of excellence</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="ci-tile__num">200+</div>
-        <div class="ci-tile__label">Expert Faculty</div>
-        <div class="ci-tile__desc">PhD-qualified professors</div>
+        <div class="ci-tile__num">120+</div>
+        <div class="ci-tile__label">Teachers</div>
+        <div class="ci-tile__desc">B.Ed qualified &amp; trained</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-        <div class="ci-tile__num">30+</div>
-        <div class="ci-tile__label">Programs</div>
-        <div class="ci-tile__desc">UG · PG · Ph.D</div>
+        <div class="ci-tile__num">16</div>
+        <div class="ci-tile__label">Grades</div>
+        <div class="ci-tile__desc">Playgroup to Class 12</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><path d="M3 7v13h18V7"/><path d="M1 10l11-7 11 7"/><rect x="9" y="13" width="6" height="7"/></svg></div>
-        <div class="ci-tile__num">1,200</div>
-        <div class="ci-tile__label">Hostel Seats</div>
-        <div class="ci-tile__desc">Boys &amp; girls on campus</div>
+        <div class="ci-tile__num">2,400</div>
+        <div class="ci-tile__label">Students</div>
+        <div class="ci-tile__desc">Max 30 per section</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
-        <div class="ci-tile__num">25+</div>
+        <div class="ci-tile__num">30+</div>
         <div class="ci-tile__label">Bus Routes</div>
-        <div class="ci-tile__desc">City-wide transport</div>
+        <div class="ci-tile__desc">GPS-tracked, city-wide</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-        <div class="ci-tile__num">Top 50</div>
-        <div class="ci-tile__label">State Ranking</div>
-        <div class="ci-tile__desc">Maharashtra colleges</div>
+        <div class="ci-tile__num">20 : 1</div>
+        <div class="ci-tile__label">Student–Teacher</div>
+        <div class="ci-tile__desc">Personal attention</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-        <div class="ci-tile__num">₹15 LPA</div>
-        <div class="ci-tile__label">Highest Package</div>
-        <div class="ci-tile__desc">Best placement offer</div>
+        <div class="ci-tile__num">15,000+</div>
+        <div class="ci-tile__label">Library Books</div>
+        <div class="ci-tile__desc">English, Hindi &amp; Marathi</div>
       </div>
 
       <div class="ci-tile">
         <div class="ci-tile__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
         <div class="ci-tile__num">Mon–Sat</div>
         <div class="ci-tile__label">Office Hours</div>
-        <div class="ci-tile__desc">9:00 AM – 5:00 PM</div>
+        <div class="ci-tile__desc">8:00 AM – 3:00 PM</div>
       </div>
 
     </div>
@@ -1055,7 +1055,7 @@ body::before {
   <!-- CTA banner -->
   <div class="ci-cta">
     <div class="ci-cta__inner">
-      <div class="ci-cta__text">Have questions about <span>admissions, fees or hostel?</span> Our AI assistant can answer instantly.</div>
+      <div class="ci-cta__text">Have questions about <span>admissions, fees or transport?</span> Our AI assistant can answer instantly.</div>
       <button class="ci-cta__btn" id="ci-ask-btn">
         Ask Chatbot
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -1122,7 +1122,7 @@ body::before {
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
     </div>
-    <div class="pf-brand-name">PDEA's Campus Assistant <span>v2.0 · AI Powered</span></div>
+    <div class="pf-brand-name"><span data-school-name>Greenfield Public School</span> <span>Enquiry Assistant · AI Powered</span></div>
   </div>
   <div class="pf-links">
     <a href="/admin">
@@ -1141,7 +1141,7 @@ body::before {
     </a>
   </div>
   <div class="pf-right">
-    &copy; 2025 <strong>PDEA College</strong> · All rights reserved
+    &copy; <span data-year>2026</span> <strong><span data-school-name>Greenfield Public School</span></strong> · All rights reserved
   </div>
 </footer>
 
@@ -1153,5 +1153,14 @@ body::before {
 <script src="js/translation.js"></script>
 <script src="js/liveChat.js"></script>
 <script src="chat.js"></script>
+<script>
+/* Fill in the school name from .env (via /api/config) */
+fetch('/api/config').then(r => r.json()).then(({ school }) => {
+  if (!school?.name) return;
+  document.querySelectorAll('[data-school-name]').forEach(el => { el.textContent = school.name; });
+  document.title = school.name + ' — Enquiry Assistant';
+}).catch(() => {});
+document.querySelectorAll('[data-year]').forEach(el => { el.textContent = new Date().getFullYear(); });
+</script>
 </body>
 </html>
