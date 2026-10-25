@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>GIT Admin Panel — Dashboard</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+/* ══════════════════════════════════════════════
+   admin-panel.html — Management Dashboard
+   Light SaaS theme · Poppins
+══════════════════════════════════════════════ */
+
+html, body { height: 100%; }
+body { overflow: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+  background-size: 26px 26px; opacity: .5;
+}
+
+/* ── Login overlay ── */
+#auth-screen {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+}
+.auth-outer { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+.auth-label {
+  font-size: .68rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--txt4); display: flex; align-items: center; gap: .6rem;
+}
+.auth-label::before, .auth-label::after { content: ''; height: 1px; width: 48px; background: var(--border); }
+.auth-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--rx-xl); width: 380px; max-width: 95vw;
+  box-shadow: var(--sh-xl); overflow: hidden;
+}
+.auth-head {
+  background: linear-gradient(135deg, var(--primary), #6366F1);
+  padding: 2.2rem; text-align: center;
+}
+.auth-head-icon {
+  width: 56px; height: 56px; border-radius: var(--rx-lg); margin: 0 auto .9rem;
+  background: rgba(255,255,255,.15); display: grid; place-items: center;
+  border: 1.5px solid rgba(255,255,255,.25);
+}
+.auth-head-icon svg { width: 28px; height: 28px; stroke: #fff; fill: none; }
+.auth-head h2 { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: .22rem; }
+.auth-head p { font-size: .73rem; color: rgba(255,255,255,.65); }
+.auth-body { padding: 1.8rem; }
+#auth-error {
+  display: none; background: var(--red-bg); border: 1px solid var(--red-bdr);
+  color: var(--red); font-size: .78rem; padding: .45rem .75rem;
+  border-radius: var(--rx-sm); margin-bottom: .9rem; text-align: center;
+}
+.fg { display: flex; flex-direction: column; gap: .32rem; margin-bottom: .85rem; }
+.fg label {
+  font-size: .7rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--txt3);
+}
+
+/* ── App layout ── */
+#admin-layout {
+  display: none; height: 100vh; position: relative; z-index: 2;
+}
+#admin-layout.visible { display: flex; }
+
+/* ── Sidebar ── */
+.app-sidebar {
+  width: 250px; flex-shrink: 0;
+  background: var(--white); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; height: 100vh;
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+  box-shadow: var(--sh-sm);
+}
+.sb-brand {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1.2rem 1.1rem; border-bottom: 1px solid var(--border);
+}
+.sb-brand-icon {
+  width: 36px; height: 36px; border-radius: var(--rx-sm); flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-m));
+  display: grid; place-items: center;
+}
+.sb-brand-icon svg { width: 20px; height: 20px; stroke: #fff; fill: none; }
+.sb-brand-text h2 { font-size: .92rem; font-weight: 700; color: var(--txt); line-height: 1.2; }
+.sb-brand-text span { font-size: .66rem; color: var(--txt4); }
+.sb-nav { flex: 1; overflow-y: auto; padding: .6rem 0; }
+.sb-bottom { padding: .6rem 0; border-top: 1px solid var(--border); }
+.nav-item {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .6rem .95rem; margin: .06rem .55rem; border-radius: var(--rx-sm);
+  font-size: .84rem; font-weight: 500; color: var(--txt3);
+  cursor: pointer; transition: var(--tr); text-decoration: none;
+}
+.nav-item .nav-ico { width: 18px; flex-shrink: 0; font-size: .88rem; opacity: .7; }
+.nav-item:hover { background: var(--bg); color: var(--txt2); }
+.nav-item.active {
+  background: var(--primary-l); color: var(--primary); font-weight: 600;
+  border-left: 3px solid var(--primary); padding-left: calc(.95rem - 3px);
+}
+.nav-item.active .nav-ico { opacity: 1; }
+
+/* ── Main content ── */
+.app-main {
+  margin-left: 250px; flex: 1; height: 100vh;
+  overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column;
+}
+
+/* ── Page header ── */
+.page-head {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: .9rem 2rem; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 40;
+  box-shadow: var(--sh-xs); flex-shrink: 0;
+}
+.ph-left h2 {
+  font-size: 1.1rem; font-weight: 700; color: var(--txt);
+  display: flex; align-items: center; gap: .5rem;
+}
+.ph-left .crumb { font-size: .72rem; color: var(--txt4); margin-top: .05rem; }
+.ph-right { display: flex; gap: .5rem; align-items: center; }
+
+/* ── Content body ── */
+.content-body { padding: 1.8rem 2rem 3rem; flex: 1; }
+
+/* ── Stat cards ── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1.1rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--rx-lg); padding: 1.4rem 1.3rem;
+  box-shadow: var(--sh-sm); position: relative; overflow: hidden;
+  transition: var(--tr); cursor: default;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+.stat-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: var(--rx-lg) 0 0 var(--rx-lg);
+}
+.stat-card:nth-child(1)::before { background: var(--primary); }
+.stat-card:nth-child(2)::before { background: var(--green); }
+.stat-card:nth-child(3)::before { background: var(--amber); }
+.stat-card:nth-child(4)::before { background: #8B5CF6; }
+.stat-bg-icon {
+  position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+  font-size: 3.5rem; opacity: .06; user-select: none;
+}
+.stat-label {
+  font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--txt4); margin-bottom: .45rem;
+}
+.stat-value {
+  font-size: 2rem; font-weight: 700; color: var(--txt); line-height: 1;
+  margin-bottom: .35rem;
+}
+.stat-footer { font-size: .72rem; color: var(--txt4); }
+.stat-icon-badge {
+  display: inline-flex; width: 36px; height: 36px; border-radius: var(--rx-sm);
+  place-items: center; justify-content: center; margin-bottom: .7rem; font-size: 1.1rem;
+}
+.stat-card:nth-child(1) .stat-icon-badge { background: var(--primary-l); }
+.stat-card:nth-child(2) .stat-icon-badge { background: var(--green-bg); }
+.stat-card:nth-child(3) .stat-icon-badge { background: var(--amber-bg); }
+.stat-card:nth-child(4) .stat-icon-badge { background: #F5F3FF; }
+
+/* ── Charts row ── */
+.charts-row { display: grid; grid-template-columns: 1fr 340px; gap: 1.1rem; margin-bottom: 2rem; }
+.chart-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--rx-lg); padding: 1.3rem 1.5rem; box-shadow: var(--sh-sm);
+}
+.chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+.chart-head h3 { font-size: .9rem; font-weight: 700; color: var(--txt); }
+.chart-head .sub { font-size: .72rem; color: var(--txt4); }
+.chart-area { position: relative; height: 200px; }
+
+/* ── Content cards ── */
+.content-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--rx-lg); overflow: hidden; margin-bottom: 1.5rem;
+  box-shadow: var(--sh-sm);
+}
+.content-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.content-card-head h3 { font-size: .9rem; font-weight: 700; color: var(--txt); }
+.content-card-head .sub { font-size: .72rem; color: var(--txt4); margin-top: .05rem; }
+
+/* ── Toolbar ── */
+.toolbar { display: flex; gap: .65rem; padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
+.toolbar input { flex: 1; min-width: 200px; max-width: 360px; }
+.filters {
+  display: flex; gap: .35rem; flex-wrap: wrap;
+  padding: .75rem 1.4rem; border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.fc {
+  font-family: var(--ff); font-size: .72rem; font-weight: 600;
+  padding: .28rem .82rem; border-radius: 99px;
+  border: 1.5px solid var(--border); background: var(--white);
+  color: var(--txt3); cursor: pointer; transition: var(--tr);
+}
+.fc:hover { border-color: var(--primary); color: var(--primary); }
+.fc.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ── Modal ── */
+.modal-ov {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px); z-index: 200;
+  display: none; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-ov.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--rx-xl); width: 580px; max-width: 98vw;
+  max-height: 92vh; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: var(--sh-xl); border: 1px solid var(--border);
+  animation: modal-pop .24s cubic-bezier(.34,1.56,.64,1);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.6rem; border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.modal-head h3 { font-size: 1rem; font-weight: 700; color: var(--txt); }
+.modal-x {
+  width: 30px; height: 30px; border-radius: var(--rx-sm);
+  background: var(--bg2); border: 1px solid var(--border);
+  cursor: pointer; display: grid; place-items: center;
+  font-size: .9rem; color: var(--txt3); transition: var(--tr);
+}
+.modal-x:hover { background: var(--red-bg); color: var(--red); border-color: var(--red-bdr); }
+.modal-body { padding: 1.5rem 1.6rem; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: .9rem 1.6rem; border-top: 1px solid var(--border);
+  background: var(--bg); display: flex; justify-content: flex-end; gap: .5rem;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fg + .fg { margin-top: .75rem; }
+.hint { font-size: .7rem; color: var(--txt4); margin-top: .22rem; }
+.hint code { background: var(--bg2); padding: .02rem .3rem; border-radius: 3px; font-size: .65rem; border: 1px solid var(--border); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--rx); padding: .75rem 1.2rem;
+  font-size: .84rem; font-weight: 500; color: var(--txt);
+  transform: translateY(80px); opacity: 0;
+  transition: .32s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: var(--sh-lg); max-width: 300px;
+}
+#toast.show         { transform: translateY(0); opacity: 1; }
+#toast.show.success { border-color: var(--green-bdr); background: var(--green-bg); color: var(--green); }
+#toast.show.error   { border-color: var(--red-bdr);   background: var(--red-bg);   color: var(--red); }
+
+@media (max-width: 1100px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px)  { .charts-row { grid-template-columns: 1fr; } }
+@media (max-width: 768px)  {
+  .app-sidebar { display: none; }
+  .app-main { margin-left: 0; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .content-body { padding: 1.2rem; }
+}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-outer">
+    <div class="auth-label">Admin Access</div>
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-head-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="10" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h2>Admin Dashboard</h2>
+        <p>Government Institute of Technology · Chatbot Manager</p>
+      </div>
+      <div class="auth-body">
+        <div id="auth-error"></div>
+        <div class="fg">
+          <label>Username</label>
+          <input type="text" id="au" placeholder="admin" autocomplete="username"/>
+        </div>
+        <div class="fg" style="margin-bottom:1.2rem">
+          <label>Password</label>
+          <input type="password" id="ap" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;font-size:.9rem">
+          Sign In →
+        </button>
+        <p style="font-size:.7rem;color:var(--txt4);text-align:center;margin-top:.9rem">Default: admin / admin123</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ADMIN LAYOUT
+══════════════════════════════════════════════ -->
+<div id="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-icon">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="sb-brand-text">
+        <h2>GIT Chatbot</h2>
+        <span>Admin Panel v2.0</span>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-item active" onclick="showTab('dashboard')">
+        <span class="nav-ico">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showTab('intents')">
+        <span class="nav-ico">🧠</span> Intent Manager
+      </div>
+      <div class="nav-item" onclick="showTab('sessions')">
+        <span class="nav-ico">💬</span> Chat Sessions
+      </div>
+      <div style="height:1px;background:var(--border);margin:.5rem .8rem"></div>
+      <div class="nav-item" onclick="window.open('/','_blank')">
+        <span class="nav-ico">🤖</span> Student Chatbot
+      </div>
+      <div class="nav-item" onclick="window.open('/admin/adminChat.html','_blank')">
+        <span class="nav-ico">🎧</span> Live Chat Admin
+      </div>
+    </nav>
+    <div class="sb-bottom">
+      <div class="nav-item" onclick="doLogout()">
+        <span class="nav-ico">🚪</span> Logout
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="app-main">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div id="tab-dashboard">
+      <div class="page-head">
+        <div class="ph-left">
+          <h2>📊 Dashboard</h2>
+          <div class="crumb">Performance overview · Real-time analytics</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="content-body">
+
+        <!-- Stats grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-bg-icon">💬</div>
+            <div class="stat-icon-badge">💬</div>
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value" id="d-sessions">—</div>
+            <div class="stat-footer">All time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-bg-icon">📨</div>
+            <div class="stat-icon-badge">📨</div>
+            <div class="stat-label">Total Messages</div>
+            <div class="stat-value" id="d-messages">—</div>
+            <div class="stat-footer">User + bot combined</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-bg-icon">✅</div>
+            <div class="stat-icon-badge">✅</div>
+            <div class="stat-label">Resolved</div>
+            <div class="stat-value" id="d-resolved">—</div>
+            <div class="stat-footer">Intents matched</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-bg-icon">🎯</div>
+            <div class="stat-icon-badge">🎯</div>
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value" id="d-accuracy">—</div>
+            <div class="stat-footer">Resolution rate</div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-head">
+              <div>
+                <h3>Message Volume</h3>
+                <div class="sub">Last 7 days</div>
+              </div>
+              <span class="badge badge-purple" style="font-size:.62rem">Live</span>
+            </div>
+            <div class="chart-area"><canvas id="chart-line"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-head">
+              <div>
+                <h3>Query Breakdown</h3>
+                <div class="sub">By category</div>
+              </div>
+            </div>
+            <div class="chart-area"><canvas id="chart-doughnut"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Top intents table -->
+        <div class="content-card">
+          <div class="content-card-head">
+            <div>
+              <h3>Top Intents by Usage</h3>
+              <div class="sub">Most frequently matched intents</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>#</th><th>Intent</th><th>Category</th><th>Hits</th><th>Status</th></tr>
+            </thead>
+            <tbody id="top-body">
+              <tr><td colspan="5" class="empty-cell"><span class="ei">📊</span>Loading data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div><!-- #tab-dashboard -->
+
+    <!-- ─── INTENT MANAGER ─── -->
+    <div id="tab-intents" style="display:none">
+      <div class="page-head">
+        <div class="ph-left">
+          <h2>🧠 Intent Manager</h2>
+          <div class="crumb">Create and manage training data for the chatbot</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-primary btn-sm" onclick="openCreate()">+ New Intent</button>
+        </div>
+      </div>
+      <div class="content-body">
+        <div class="content-card">
+          <div class="toolbar">
+            <input type="text" id="srch" placeholder="🔍  Search intents, phrases, categories…" oninput="filterI()" style="max-width:400px"/>
+          </div>
+          <div class="filters">
+            <button class="fc active" onclick="setF('all',this)">All</button>
+            <button class="fc" onclick="setF('admissions',this)">Admissions</button>
+            <button class="fc" onclick="setF('academics',this)">Academics</button>
+            <button class="fc" onclick="setF('fees',this)">Fees</button>
+            <button class="fc" onclick="setF('campus',this)">Campus</button>
+            <button class="fc" onclick="setF('hostel',this)">Hostel</button>
+            <button class="fc" onclick="setF('transport',this)">Transport</button>
+            <button class="fc" onclick="setF('placements',this)">Placements</button>
+            <button class="fc" onclick="setF('contact',this)">Contact</button>
+            <button class="fc" onclick="setF('events',this)">Events</button>
+            <button class="fc" onclick="setF('general',this)">General</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Intent</th><th>Category</th><th>Phrases</th><th>Hits</th><th>Active</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="intents-body">
+              <tr><td colspan="6" class="empty-cell"><span class="ei">🧠</span>Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SESSIONS ─── -->
+    <div id="tab-sessions" style="display:none">
+      <div class="page-head">
+        <div class="ph-left">
+          <h2>💬 Chat Sessions</h2>
+          <div class="crumb">All student conversation history</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-ghost btn-sm" onclick="loadSessions()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="content-body">
+        <div class="content-card">
+          <table>
+            <thead>
+              <tr><th>Session ID</th><th>User</th><th>Messages</th><th>Resolved</th><th>Fallbacks</th><th>Last Active</th></tr>
+            </thead>
+            <tbody id="sessions-body">
+              <tr><td colspan="6" class="empty-cell"><span class="ei">💬</span>Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- #admin-layout -->
+
+<!-- ══════════════════════════════════════════════
+     MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-ov" id="intent-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="m-title">Create Intent</h3>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id"/>
+      <div class="form-row">
+        <div class="fg">
+          <label>Intent Name *</label>
+          <input type="text" id="m-name" placeholder="e.g. admission_process"/>
+          <div class="hint">Lowercase with underscores only</div>
+        </div>
+        <div class="fg">
+          <label>Display Name *</label>
+          <input type="text" id="m-display" placeholder="e.g. Admission Process"/>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:.85rem">
+        <label>Category *</label>
+        <select id="m-cat">
+          <option value="admissions">Admissions</option>
+          <option value="academics">Academics</option>
+          <option value="fees">Fees</option>
+          <option value="campus">Campus</option>
+          <option value="hostel">Hostel</option>
+          <option value="transport">Transport</option>
+          <option value="placements">Placements</option>
+          <option value="contact">Contact</option>
+          <option value="events">Events</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Training Phrases * <span style="font-weight:400;text-transform:none">(one per line)</span></label>
+        <textarea id="m-phrases" rows="5" placeholder="how to apply for admission&#10;what is the admission process&#10;steps to get admission&#10;admission procedure at git"></textarea>
+        <div class="hint">Aim for 8–15 varied phrasings for best NLP accuracy.</div>
+      </div>
+      <div class="fg">
+        <label>Responses * <span style="font-weight:400;text-transform:none">(separate with <code>---</code> on its own line)</span></label>
+        <textarea id="m-resp" rows="6" placeholder="📋 Admission Process:&#10;1. Fill application form at website/apply&#10;2. Upload required documents&#10;3. Pay application fee&#10;&#10;Contact: phone · email"></textarea>
+        <div class="hint">Use <code>---</code> alone on a line to add multiple response variants.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIntent()">💾 Save Intent</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════
+     APP JAVASCRIPT — logic unchanged from original
+══════════════════════════════════════════════ -->
+<script>
+let TOKEN='',allI=[],activeF='all';
+
+async function doLogin(){
+  const u=document.getElementById('au').value.trim(),p=document.getElementById('ap').value.trim();
+  document.getElementById('auth-error').style.display='none';
+  if(!u||!p){showErr('Enter username and password.');return;}
+  try{
+    const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await res.json();
+    if(d.success){
+      TOKEN=d.token;
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('admin-layout').classList.add('visible');
+      loadDashboard();loadIntents();loadSessions();initCharts();
+    }else{showErr(d.error||'Invalid credentials.');}
+  }catch{showErr('Connection error — is server running?');}
+}
+function showErr(m){const e=document.getElementById('auth-error');e.style.display='block';e.textContent=m;}
+document.getElementById('ap').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('au').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('ap').focus();});
+function doLogout(){TOKEN='';document.getElementById('admin-layout').classList.remove('visible');document.getElementById('auth-screen').style.display='flex';}
+
+function showTab(n){
+  ['dashboard','intents','sessions'].forEach(t=>document.getElementById('tab-'+t).style.display=t===n?'block':'none');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const idx=['dashboard','intents','sessions'].indexOf(n);
+  document.querySelectorAll('.nav-item')[idx]?.classList.add('active');
+}
+
+async function loadDashboard(){
+  try{
+    const sr=await fetch('/api/chat/stats'),sd=await sr.json();
+    if(sd.success||sd.stats){const s=sd.stats||sd;
+      ['sessions','messages','resolved'].forEach(k=>document.getElementById('d-'+k).textContent=s['total'+k.charAt(0).toUpperCase()+k.slice(1)]||0);
+      document.getElementById('d-accuracy').textContent=(sd.stats?.accuracy||0)+'%';
+    }
+    const ir=await fetch('/api/admin/intents',{headers:aH()}),id=await ir.json();
+    if(id.success){
+      const top=[...id.intents].sort((a,b)=>b.hitCount-a.hitCount).slice(0,12);
+      document.getElementById('top-body').innerHTML=top.length
+        ?top.map((i,n)=>`<tr>
+            <td style="color:var(--txt4);font-weight:700;font-size:.78rem">${n+1}</td>
+            <td><strong style="color:var(--txt)">${i.intentName}</strong><br/><small style="color:var(--txt4);font-size:.72rem">${i.displayName}</small></td>
+            <td><span class="badge badge-${i.category}" style="font-size:.62rem">${i.category}</span></td>
+            <td><strong>${i.hitCount}</strong></td>
+            <td><span style="color:${i.isActive?'var(--green)':'var(--red)'};font-weight:700;font-size:.8rem">${i.isActive?'● Active':'○ Off'}</span></td>
+          </tr>`).join('')
+        :'<tr><td colspan="5" class="empty-cell"><span class="ei">📊</span>No data yet</td></tr>';
+    }
+  }catch(e){console.error(e);}
+}
+
+async function loadIntents(){
+  try{
+    const res=await fetch('/api/admin/intents',{headers:aH()}),d=await res.json();
+    if(d.success){allI=d.intents;renderI(allI);}
+  }catch{toast('Failed to load intents','error');}
+}
+function renderI(list){
+  if(!list.length){document.getElementById('intents-body').innerHTML='<tr><td colspan="6" class="empty-cell"><span class="ei">🔍</span>No intents found.</td></tr>';return;}
+  document.getElementById('intents-body').innerHTML=list.map(i=>`<tr>
+    <td><strong style="color:var(--txt)">${i.intentName}</strong><br/><small style="color:var(--txt4);font-size:.72rem">${i.displayName}</small></td>
+    <td><span class="badge badge-${i.category}" style="font-size:.62rem">${i.category}</span></td>
+    <td><div class="pills">${i.trainingPhrases.slice(0,3).map(p=>`<span class="pill">${p}</span>`).join('')}${i.trainingPhrases.length>3?`<span class="pill" style="background:var(--bg2);color:var(--txt3)">+${i.trainingPhrases.length-3}</span>`:''}</div></td>
+    <td><strong>${i.hitCount}</strong></td>
+    <td><label class="toggle"><input type="checkbox" ${i.isActive?'checked':''} onchange="toggleI('${i._id}')"/><span class="toggle-s"></span></label></td>
+    <td><div class="acts">
+      <button class="btn btn-ghost btn-xs" onclick='openEdit(${JSON.stringify(i).replace(/'/g,"&#39;")})'>✏️ Edit</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteI('${i._id}','${i.intentName}')">🗑</button>
+    </div></td>
+  </tr>`).join('');
+}
+function filterI(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  renderI(allI.filter(i=>(activeF==='all'||i.category===activeF)&&(i.intentName.includes(q)||i.displayName.toLowerCase().includes(q)||i.trainingPhrases.some(p=>p.toLowerCase().includes(q)))));
+}
+function setF(cat,el){activeF=cat;document.querySelectorAll('.fc').forEach(b=>b.classList.remove('active'));el.classList.add('active');filterI();}
+
+function openCreate(){
+  document.getElementById('m-title').textContent='Create New Intent';
+  ['m-id','m-name','m-display','m-phrases','m-resp'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-cat').value='general';
+  document.getElementById('m-name').disabled=false;
+  document.getElementById('intent-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('m-name').focus(),100);
+}
+function openEdit(intent){
+  document.getElementById('m-title').textContent='Edit Intent';
+  document.getElementById('m-id').value=intent._id;
+  document.getElementById('m-name').value=intent.intentName;
+  document.getElementById('m-display').value=intent.displayName;
+  document.getElementById('m-cat').value=intent.category;
+  document.getElementById('m-phrases').value=intent.trainingPhrases.join('\n');
+  document.getElementById('m-resp').value=intent.responses.join('\n---\n');
+  document.getElementById('m-name').disabled=true;
+  document.getElementById('intent-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('intent-modal').classList.remove('open');}
+document.getElementById('intent-modal').addEventListener('click',e=>{if(e.target===document.getElementById('intent-modal'))closeModal();});
+
+async function saveIntent(){
+  const id=document.getElementById('m-id').value;
+  const name=document.getElementById('m-name').value.trim().replace(/\s+/g,'_').toLowerCase();
+  const display=document.getElementById('m-display').value.trim();
+  const category=document.getElementById('m-cat').value;
+  const phrases=document.getElementById('m-phrases').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const responses=document.getElementById('m-resp').value.split('\n---\n').map(s=>s.trim()).filter(Boolean);
+  if(!name||!display||!phrases.length||!responses.length){toast('Fill all required fields','error');return;}
+  try{
+    const res=await fetch(id?`/api/admin/intents/${id}`:'/api/admin/intents',{
+      method:id?'PUT':'POST',headers:{'Content-Type':'application/json',...aH()},
+      body:JSON.stringify({intentName:name,displayName:display,category,trainingPhrases:phrases,responses})
+    });
+    const d=await res.json();
+    if(d.success){toast(id?'✅ Intent updated':'✅ Intent created');closeModal();loadIntents();if(!id)loadDashboard();}
+    else toast(d.error||'Save failed','error');
+  }catch{toast('Network error','error');}
+}
+async function deleteI(id,name){
+  if(!confirm(`Delete "${name}"?\n\nThis cannot be undone.`))return;
+  try{
+    const res=await fetch(`/api/admin/intents/${id}`,{method:'DELETE',headers:aH()}),d=await res.json();
+    if(d.success)toast('Intent deleted'),loadIntents();else toast(d.error,'error');
+  }catch{toast('Delete failed','error');}
+}
+async function toggleI(id){
+  try{await fetch(`/api/admin/intents/${id}/toggle`,{method:'POST',headers:aH()});loadIntents();}
+  catch{toast('Toggle failed','error');}
+}
+async function loadSessions(){
+  try{
+    const res=await fetch('/api/chat/sessions'),d=await res.json();
+    if(d.success){
+      document.getElementById('sessions-body').innerHTML=d.sessions.length
+        ?d.sessions.map(s=>`<tr>
+            <td><span class="sid">${s.sessionId}</span></td>
+            <td>${s.userId||'anonymous'}</td>
+            <td><strong>${s.totalMessages}</strong></td>
+            <td><span class="sb ok">${s.resolvedCount}</span></td>
+            <td><span class="sb ${s.fallbackCount>0?'bad':'ok'}">${s.fallbackCount}</span></td>
+            <td style="color:var(--txt4);font-size:.82rem">${new Date(s.lastActivity).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+          </tr>`).join('')
+        :'<tr><td colspan="6" class="empty-cell"><span class="ei">💬</span>No sessions found.</td></tr>';
+    }
+  }catch{toast('Failed to load sessions','error');}
+}
+function aH(){return{'Authorization':`Bearer ${TOKEN}`};}
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`show ${type}`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='',3200);
+}
+
+/* ── Chart.js Analytics ── */
+function initCharts(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const msgs=[38,54,47,80,65,29,42];
+  const lCtx=document.getElementById('chart-line')?.getContext('2d');
+  if(lCtx){
+    new Chart(lCtx,{type:'line',data:{
+      labels:days,
+      datasets:[{label:'Messages',data:msgs,
+        borderColor:'#4F46E5',backgroundColor:'rgba(79,70,229,.08)',
+        borderWidth:2.5,pointBackgroundColor:'#4F46E5',pointRadius:4,
+        tension:.4,fill:true}]
+    },options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#9CA3AF',font:{family:'Poppins',size:11}}},
+              y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#9CA3AF',font:{family:'Poppins',size:11}}}}}});
+  }
+  const dCtx=document.getElementById('chart-doughnut')?.getContext('2d');
+  if(dCtx){
+    new Chart(dCtx,{type:'doughnut',data:{
+      labels:['Admissions','Fees','Campus','Academics','Other'],
+      datasets:[{data:[32,24,18,15,11],
+        backgroundColor:['#4F46E5','#059669','#D97706','#2563EB','#8B5CF6'],
+        borderWidth:2,borderColor:'#fff',hoverOffset:6}]
+    },options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Poppins',size:11},color:'#6B7280',padding:12,boxWidth:12}}}}});
+  }
+}
+</script>
+</body>
+</html>
